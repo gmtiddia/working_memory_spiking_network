@@ -1,4 +1,4 @@
-from model import WMModel
+from model.model import WMModel
 import matplotlib.pyplot as plt
 import os
 

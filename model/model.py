@@ -19,9 +19,9 @@ import json
 import pandas as pd
 import time
 from copy import deepcopy
-from default_params import default_network_params, default_simulation_params
-from default_params import update_params, check_params
-from model_helpers import get_weight, noise_params
+from model.default_params import default_network_params, default_simulation_params
+from model.default_params import update_params, check_params
+from model.model_helpers import get_weight, noise_params
 
 
 class WMModel:

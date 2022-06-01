@@ -31,7 +31,7 @@ default_network_params = {
     # mean external current used in the simulation [mV for exc population]
     "mu_exc": 24.30,
     # mean external current used in the simulation [mV for inh population]
-    "mu_inh": 21.0,
+    "mu_inh": 20.5,
     # current offset to return at stable state
     "mu_exc_end": 24.30 - 22.8,
     # std of external current
@@ -87,7 +87,7 @@ STP parameters
 """
 default_stp_params = {
     # baseline utilization factor
-    "U": 0.20,
+    "U": 0.19,
     # u value at the beginning
     "u0" : 0.25,
     # x value at the beginning

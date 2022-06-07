@@ -255,7 +255,8 @@ class WMModel:
         """
         nest.ResetKernel()
         nest.SetKernelStatus({"print_time" : True,
-                              "resolution": self.simulation_params["dt"]})
+                              "resolution": self.simulation_params["dt"],
+                              "local_num_threads": self.simulation_params["threads"]})
     
 
     def create_populations(self):
@@ -774,8 +775,8 @@ class WMModel:
         self.connect_external_inputs()
         self.connect_recording_devices()
         t2 = time.time()
-        print("Nodes connected in {:.2} s.".format(t2-t1))
-        print("Network built in {:.2} s.".format(t2-t0))
+        print("Nodes connected in {:.3} s.".format(t2-t1))
+        print("Network built in {:.3} s.".format(t2-t0))
 
 
     def simulate_network(self):
@@ -868,7 +869,7 @@ class WMModel:
         colors = ["blue", "red", "green", "orange", "olive"]
         for i in range(len(self.spike_recorders)):
             sr = self.spike_recorders[i].get("events")
-            ax.plot(sr["times"], sr["senders"], '.', color = colors[i], label="Selective population {}".format(self.simulation_params["recording_params"]["pop_recorded"][i]))
+            ax.plot(sr["times"], sr["senders"], '.', color = colors[i%len(colors)], label="Selective population {}".format(self.simulation_params["recording_params"]["pop_recorded"][i]))
         ax.set_ylabel("# cell", fontsize=axfont)
         ax.set_xlabel("Time [ms]", fontsize=axfont)
         ax.tick_params(labelsize=axfont)

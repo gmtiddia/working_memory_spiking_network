@@ -133,6 +133,8 @@ Simulation parameters
 default_simulation_params = {
     # master seed for random number generators
     "master_seed" : 123456,
+    # number of threads
+    "threads" : 1,
     # simulation step (in ms)
     "dt" : 0.1,
     # simulated time (in ms)

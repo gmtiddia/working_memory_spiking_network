@@ -29,13 +29,15 @@ network_p = {
 # presimulation time (i.e. time in which the network stays in the spontaneous activity)
 tpresim = 2000.0
 # simulation time
-tsim = 4000.0
+tsim = 5000.0
 
 # simulation params dict
 # here add the parameters to be edited. The rest of the parameters are in default_params.py
 simulation_p = {
     # path to data
     "data_path" : os.path.join(os.getcwd(), 'data/'),
+    # number of OpenMP threads
+    "threads" : 4,
     # overall simulation time
     "t_sim" : tsim + tpresim,
     # beginning of th current stimulus which diminishes overall background input
@@ -86,6 +88,9 @@ network.add_item_loading_signals(pop_id=[0], origin=[tpresim])
 # to reproduce Figure 3B with overlapping populations
 #network.add_item_loading_signals(pop_id=[0,1], origin=[tpresim,tpresim+3000.0])
 #network.add_random_nonspecific_noise([tpresim+1250.0], frac = 0.15)
+
+# to reproduce Figure 4
+#network.add_item_loading_signals(pop_id=[0,1,2], origin=[tpresim, tpresim+3000.0, tpresim+6000.0])
 
 # save used parameters into a json
 network.save_params()

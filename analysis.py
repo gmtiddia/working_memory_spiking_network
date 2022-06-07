@@ -32,46 +32,46 @@ def load_spike_data(overlap = False):
     
     return(srs)
 
-
 def raster_plot():
     labelsize=19
     titlesize=20
-    fig, ax = plt.subplots()
-    plt.title("Raster plot for a subset of Pop {} and Pop {} neurons".format(simulation_params["recording_params"]["pop_recorded"][0], simulation_params["recording_params"]["pop_recorded"][1]), fontsize=titlesize)
-    ax.plot(sr0[:,1], sr0[:,0], 'b.', label="Sel Pop {}".format(simulation_params["recording_params"]["pop_recorded"][0]))
-    ax.set_ylabel("# cell", color="b", fontsize=labelsize)
+    f = network_params["f"]
+    N_E = network_params["N_exc"]
+    # number of neurons belonging to a selective populaiton
+    n_E = int(N_E * f)
+    n_E_frac = int(n_E * 0.1)
+    colors = ["blue", "red", "green", "orange", "olive", "cornflowerblue", "salmon", "lime", "gold", "yellowgreen"]
+    fig, ax = plt.subplots(figsize=(15,10))
+    for i in range(len(srs)):
+        dum = srs[i]
+        dumx = []
+        dumy = []
+        for j in range(len(dum[:,0])):
+            if(srs[i][j,0]<n_E_frac+n_E*i):
+                dumx.append(dum[j,1])
+                dumy.append(dum[j,0]-(n_E-n_E_frac)*i)
+        ax.plot(dumx, dumy, '.', color=colors[i])
+    ax.set_ylabel("# cell", fontsize=labelsize)
     ax.set_xlabel("Time [ms]", fontsize=labelsize)
+    ax.set_xlim(0,20000)
+    ax.set_ylim(0,n_E_frac*len(srs))
     ax.tick_params(labelsize=labelsize)
-    ax.tick_params(axis ='y', labelcolor = 'blue')
-    ax2=ax.twinx()
-    ax2.plot(sr1[:,1], sr1[:,0], 'r.', label="Sel Pop {}".format(simulation_params["recording_params"]["pop_recorded"][1]))
     for i in range(network_params["item_loading"]["nstim"]):
-        if(i==0):
-            ax2.axvspan(network_params["item_loading"]["origin"][i], network_params["item_loading"]["origin"][i]+network_params["stimulation_params"]["T_cue"], alpha=0.5, color='grey', label="Item Loading")
-        else:
-            ax2.axvspan(network_params["item_loading"]["origin"][i], network_params["item_loading"]["origin"][i]+network_params["stimulation_params"]["T_cue"], alpha=0.5, color='grey')
+        ax.axvspan(network_params["item_loading"]["origin"][i], network_params["item_loading"]["origin"][i]+network_params["stimulation_params"]["T_cue"], (1./len(srs))*i, (1./len(srs))*(i+1), alpha=0.5, color='grey')
     if("nonspecific_readout_signals" in network_params):
         for i in range(network_params["nonspecific_readout_signals"]["nstim"]):
             if(i==0):
-                ax2.axvspan(network_params["nonspecific_readout_signals"]["origin"][i], network_params["nonspecific_readout_signals"]["origin"][i]+network_params["stimulation_params"]["T_reac"], alpha=0.5, color='cornflowerblue', label="Readout signal")
+                ax.axvspan(network_params["nonspecific_readout_signals"]["origin"][i], network_params["nonspecific_readout_signals"]["origin"][i]+network_params["stimulation_params"]["T_reac"], alpha=0.5, color='cornflowerblue', label="Readout signal")
             else:
-                ax2.axvspan(network_params["nonspecific_readout_signals"]["origin"][i], network_params["nonspecific_readout_signals"]["origin"][i]+network_params["stimulation_params"]["T_reac"], alpha=0.5, color='cornflowerblue')
+                ax.axvspan(network_params["nonspecific_readout_signals"]["origin"][i], network_params["nonspecific_readout_signals"]["origin"][i]+network_params["stimulation_params"]["T_reac"], alpha=0.5, color='cornflowerblue')
     if("nonspecific_noise" in network_params):
         for i in range(network_params["nonspecific_noise"]["nstim"]):
             if(i==0):
-                ax2.axvspan(network_params["nonspecific_noise"]["origin"][i], network_params["nonspecific_noise"]["origin"][i]+network_params["stimulation_params"]["T_reac"], alpha=0.5, color='turquoise', label="Noise")
+                ax.axvspan(network_params["nonspecific_noise"]["origin"][i], network_params["nonspecific_noise"]["origin"][i]+network_params["stimulation_params"]["T_reac"], alpha=0.5, color='turquoise', label="Noise")
             else:
-                ax2.axvspan(network_params["nonspecific_noise"]["origin"][i], network_params["nonspecific_noise"]["origin"][i]+network_params["stimulation_params"]["T_reac"], alpha=0.5, color='turquoise')
-    
-    ax2.set_ylabel("# cell", color="r", fontsize=labelsize)
-    ax2.tick_params(labelsize=labelsize)
-    ax2.tick_params(axis ='y', labelcolor = 'red')
-
-    lines_1, labels_1 = ax.get_legend_handles_labels()
-    lines_2, labels_2 = ax2.get_legend_handles_labels()
-    lines = lines_1 + lines_2
-    labels = labels_1 + labels_2
-    ax2.legend(lines, labels)
+                ax.axvspan(network_params["nonspecific_noise"]["origin"][i], network_params["nonspecific_noise"]["origin"][i]+network_params["stimulation_params"]["T_reac"], alpha=0.5, color='turquoise')
+    plt.subplots_adjust(left=0.07, right=0.976, top=0.925, bottom=0.1)
+    plt.savefig(simulation_params['data_path']+"raster_plot_analysis.png")
     plt.draw()
 
 
@@ -522,7 +522,7 @@ sr2 = srs[2]
 sr3 = srs[3]
 sr4 = srs[4]
 
-
+raster_plot()
 
 figure = 2
 stp = simulation_params["recording_params"]["stp_recording"]

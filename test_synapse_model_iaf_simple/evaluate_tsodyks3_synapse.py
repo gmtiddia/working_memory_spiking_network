@@ -20,11 +20,11 @@ nest.ResetKernel()
 # Parameter set for facilitation
 
 fac_params = {"U": 0.2, "u": 0.2, 'x': 1.0, 'y': 0.0, "tau_fac": 1500.,
-              "tau_rec": 200., "weight": 100.}
+              "tau_rec": 200., "weight": 10.}
 fac_params2 = {"U": 0.2, "u": 0.2, 'x': 1.0, "tau_fac": 1500.,
-              "tau_rec": 200., "weight": 100.}
+              "tau_rec": 200., "weight": 10.}
 fac_params3 = {"U": 0.2, "u": 0.2, 'x': 1.0, "tau_fac": 1500.,
-              "tau_rec": 200., "weight": 100.}
+              "tau_rec": 200., "weight": 10.}
 
 ###############################################################################
 # Now we assign the parameter set to the synapse models.
@@ -68,8 +68,7 @@ sim2 = 1000.0
 sim3 = 500.0
 
 
-#neuron[0].I_e = 376.0
-neuron[0].set(I_e=376.0)
+neuron[0].I_e = 376.0
 print(nest.GetStatus(neuron[0]))
 nest.Simulate(sim1)
 

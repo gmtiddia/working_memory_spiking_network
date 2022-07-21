@@ -270,7 +270,7 @@ class WMModel:
         self.exc_populations = []
 
         # whole exc neurons
-        self.exc_population = nest.Create("iaf_simple", self.network_params["N_exc"])
+        self.exc_population = nest.Create("iaf_psc_exp", self.network_params["N_exc"])
         nest.SetStatus(self.exc_population, {"tau_m": self.network_params["neur_params"]["tau"][0],
                                              "t_ref": self.network_params["neur_params"]["t_ref"][0],
                                              "V_th": self.network_params["neur_params"]["V_th"][0],
@@ -279,7 +279,7 @@ class WMModel:
                                              "V_m": self.network_params["neur_params"]["V_m"][0]})
         
         #whole inh neurons
-        self.inh_population = nest.Create("iaf_simple", self.network_params["N_inh"])
+        self.inh_population = nest.Create("iaf_psc_exp", self.network_params["N_inh"])
         nest.SetStatus(self.inh_population, {"tau_m" : self.network_params["neur_params"]["tau"][1],
                                              "t_ref" : self.network_params["neur_params"]["t_ref"][1],
                                              "V_th" : self.network_params["neur_params"]["V_th"][1],
@@ -558,9 +558,9 @@ class WMModel:
                     print("\tSource: selective population ", j+1)
                 con_dict = {'rule': 'fixed_indegree', 
                             'indegree': int(self.f*self.c*self.network_params["N_exc"]),
-                            'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                            'allow_autapses': True, 'allow_multapses': True}
                 if i==j:
-                    syn_dict = {"synapse_model": "tsodyks2_synapse",
+                    syn_dict = {"synapse_model": "tsodyks3_synapse",
                                 "weight": get_weight(self.network_params["syn_params"]["J_p"], self.network_params["neur_params"]["tau"][0]),
                                 "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
                                 "tau_rec": self.network_params["stp_params"]["tau_D"],
@@ -570,7 +570,7 @@ class WMModel:
                                 "x": self.network_params["stp_params"]["x0"]}
                     nest.Connect(self.exc_populations[j], self.exc_populations[i], con_dict, syn_dict)
                 else:
-                    syn_dict = {"synapse_model": "tsodyks2_synapse",
+                    syn_dict = {"synapse_model": "tsodyks3_synapse",
                                 "weight": get_weight(self.network_params["syn_params"]["J_b"], self.network_params["neur_params"]["tau"][0]),
                                 "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
                                 "tau_rec": self.network_params["stp_params"]["tau_D"],
@@ -584,8 +584,8 @@ class WMModel:
             if more_print:
                 print("\tSource: non-selective exc pop")
             con_dict = {'rule': 'fixed_indegree', 'indegree': int((1.0-self.network_params["syn_params"]["gamma_0"])*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
-                        'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
-            syn_dict = {"synapse_model": "tsodyks2_synapse",
+                        'allow_autapses': True, 'allow_multapses': True}
+            syn_dict = {"synapse_model": "tsodyks3_synapse",
                         "weight": get_weight(self.network_params["syn_params"]["J_b"], self.network_params["neur_params"]["tau"][0]),
                         "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
                         "tau_rec": self.network_params["stp_params"]["tau_D"],
@@ -596,8 +596,8 @@ class WMModel:
             nest.Connect(self.exc_populations[-1], self.exc_populations[i], con_dict, syn_dict)
 
             con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.network_params["syn_params"]["gamma_0"]*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
-                        'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
-            syn_dict = {"synapse_model": "tsodyks2_synapse",
+                        'allow_autapses': True, 'allow_multapses': True}
+            syn_dict = {"synapse_model": "tsodyks3_synapse",
                         "weight": get_weight(self.network_params["syn_params"]["J_p"], self.network_params["neur_params"]["tau"][0]),
                         "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
                         "tau_rec": self.network_params["stp_params"]["tau_D"],
@@ -611,7 +611,7 @@ class WMModel:
             if more_print:
                 print("\tSource: inh pop")
             con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.c*self.network_params["N_inh"]),
-                        'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                        'allow_autapses': True, 'allow_multapses': True}
             syn_dict = {"synapse_model": "static_synapse",
                         "weight": get_weight(-self.network_params["syn_params"]["J_EI"], self.network_params["neur_params"]["tau"][1]),
                         "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1])}
@@ -625,7 +625,7 @@ class WMModel:
             if more_print:
                 print("\tSource: selective population ", i+1)
             con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.f*self.c*self.network_params["N_exc"]),
-                        'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                        'allow_autapses': True, 'allow_multapses': True}
             syn_dict = {"synapse_model": "static_synapse",
                         "weight": get_weight(self.network_params["syn_params"]["J_IE"], self.network_params["neur_params"]["tau"][1]),
                         "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1])}    
@@ -635,7 +635,7 @@ class WMModel:
         if more_print:
             print("\tSource: non-selective exc pop")
         con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
-                    'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                    'allow_autapses': True, 'allow_multapses': True}
         syn_dict = {"synapse_model": "static_synapse",
                     "weight": get_weight(self.network_params["syn_params"]["J_IE"], self.network_params["neur_params"]["tau"][0]),
                     "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1])}  
@@ -645,7 +645,7 @@ class WMModel:
         if more_print:
             print("\tSource: inh pop")
         con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.c*self.network_params["N_inh"]),
-                    'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                    'allow_autapses': True, 'allow_multapses': True}
         syn_dict = {"synapse_model": "static_synapse",
                     "weight": get_weight(-self.network_params["syn_params"]["J_II"], self.network_params["neur_params"]["tau"][1]),
                     "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1])} 
@@ -659,8 +659,8 @@ class WMModel:
             if more_print:
                 print("\tSource: selective population ", i+1)
             con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.f*self.c*self.network_params["N_exc"]),
-                        'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
-            syn_dict = {"synapse_model": "tsodyks2_synapse",
+                        'allow_autapses': True, 'allow_multapses': True}
+            syn_dict = {"synapse_model": "tsodyks3_synapse",
                         "weight": get_weight(self.network_params["syn_params"]["J_b"], self.network_params["neur_params"]["tau"][0]),
                         "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
                         "tau_rec": self.network_params["stp_params"]["tau_D"],
@@ -674,8 +674,8 @@ class WMModel:
         if more_print:
             print("\tSource: non-selective exc pop")
         con_dict = {'rule': 'fixed_indegree', 'indegree': int((1.0-self.network_params["syn_params"]["gamma_0"])*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
-                    'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
-        syn_dict = {"synapse_model": "tsodyks2_synapse",
+                    'allow_autapses': True, 'allow_multapses': True}
+        syn_dict = {"synapse_model": "tsodyks3_synapse",
                     "weight": get_weight(self.network_params["syn_params"]["J_b"], self.network_params["neur_params"]["tau"][0]),
                     "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
                     "tau_rec": self.network_params["stp_params"]["tau_D"],
@@ -686,8 +686,8 @@ class WMModel:
         nest.Connect(self.exc_populations[-1], self.exc_populations[-1], con_dict, syn_dict)
 
         con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.network_params["syn_params"]["gamma_0"]*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
-                    'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
-        syn_dict = {"synapse_model": "tsodyks2_synapse",
+                    'allow_autapses': True, 'allow_multapses': True}
+        syn_dict = {"synapse_model": "tsodyks3_synapse",
                     "weight": get_weight(self.network_params["syn_params"]["J_p"], self.network_params["neur_params"]["tau"][0]),
                     "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
                     "tau_rec": self.network_params["stp_params"]["tau_D"],
@@ -701,7 +701,7 @@ class WMModel:
         if more_print:
             print("\tSource: inh pop")
         con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.c*self.network_params["N_inh"]),
-                    'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                    'allow_autapses': True, 'allow_multapses': True}
         syn_dict = {"synapse_model": "static_synapse",
                     "weight": get_weight(-self.network_params["syn_params"]["J_EI"], self.network_params["neur_params"]["tau"][1]),
                     "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1])}
@@ -839,7 +839,7 @@ class WMModel:
             neuronpop = self.exc_populations[npop][0:dum]
             x = []; u = []; target = []; source = []; t = []; t_lastspike =[]
             for i in range(dum):
-                conn = nest.GetConnections(synapse_model="tsodyks2_synapse", source=neuronpop[i])[0]
+                conn = nest.GetConnections(synapse_model="tsodyks3_synapse", source=neuronpop[i])[0]
                 x.append(conn.get("x"))
                 u.append(conn.get("u"))
                 target.append(conn.get("target"))

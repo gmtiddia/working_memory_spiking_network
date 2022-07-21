@@ -174,7 +174,7 @@ def figure2(stp = False, t=[], x=[], u=[], panel="A"):
     ax0.tick_params(labelsize=labelsize, axis ='y')
     ax0.set_yticks([0,80])
     ax0.set_ylim(0.0, 80.0)
-    ax0.set_xlim(1000.0, 5000.0)
+    ax0.set_xlim(2000.0, 6000.0)
     ax0.set_yticklabels(['0','80'])
     ax0.text(-0.095,1.0,panel, transform=ax0.transAxes, weight="bold", fontsize=labelsize+3)
     ax02=ax0.twinx()
@@ -193,7 +193,7 @@ def figure2(stp = False, t=[], x=[], u=[], panel="A"):
 
 
     # spontaneous rate
-    t_start2 = simulation_params["recording_params"]["spike_recording_params"]["start"] + 50.0
+    t_start2 = simulation_params["recording_params"]["spike_recording_params"]["start"] + 450.0
     t_stop2 = network_params["item_loading"]["origin"][0]
     # delay period
     t_start1 = network_params["item_loading"]["origin"][0] + network_params["stimulation_params"]["T_cue"]

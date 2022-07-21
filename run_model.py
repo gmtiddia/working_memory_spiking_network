@@ -6,30 +6,30 @@ import os
 # Please choose the values of average external currents and the starting value of u
 
 #         mu_ext   u0
-# Fig 2A - 22.8 - 0.25 (single stable state activity)
-# Fig 2B - 23.7 - 0.29 (bi-stable activity with synchronous spiking activity)
-# Fig 2C - 24.0 - 0.29 (bi-stable activity with asynchronous spiking activity)
+# Fig 2A - 22.7  - 0.19 (single stable state activity)
+# Fig 2B - 23.7  - 0.19 (bi-stable activity with synchronous spiking activity)
+# Fig 2C - 24.05 - 0.19 (bi-stable activity with asynchronous spiking activity)
 
 # average external current expressed in the average variation 
 # of membrane potential elicited [mV]
-mu_exc = 23.7
+mu_exc = 23.7 
 # short-term plasticity variable u at the beginning of the simulation
-u_start = 0.29
-
+u_start = 0.19
 # network params dict
 # here add the parameters to be edited. The rest of the parameters are in default_params.py
 network_p = {
     # excitatory input current [mV]
     'mu_exc': mu_exc,
     # current used to go back to the spontaneous activity
-    'mu_exc_end': 22.8 - mu_exc,
-    'stp_params' : {'u0': u_start}}
+    'mu_exc_end': 22.7 - mu_exc,
+    'stp_params' : {'u0': u_start},
+    'syn_params' : {'autapses' : True, 'multapses' : True}}
 
 
 # presimulation time (i.e. time in which the network stays in the spontaneous activity)
-tpresim = 2000.0
+tpresim = 3000.0
 # simulation time
-tsim = 5000.0
+tsim = 3000.0
 
 # simulation params dict
 # here add the parameters to be edited. The rest of the parameters are in default_params.py
@@ -37,25 +37,26 @@ simulation_p = {
     # path to data
     "data_path" : os.path.join(os.getcwd(), 'data/'),
     # number of OpenMP threads
-    "threads" : 4,
+    "threads" : 8,
+    "dt" : 0.1,
     # overall simulation time
     "t_sim" : tsim + tpresim,
     # beginning of th current stimulus which diminishes overall background input
-    "mu_end_origin": tsim + tpresim - 1.0,
+    "mu_end_origin": tsim + tpresim - 800.0,
     "recording_params" : {
         # fraction of neurons recorded for each selective population
         "fraction_pop_recorded" : 1.0,
         # selective excitatory population recorded (0, ..., p-1)
         "pop_recorded" : [0, 1, 2, 3, 4],
-        "spike_recording_params": {"start": 50.0},
+        "spike_recording_params": {"start": 100.0},
         # save spike data to file
         "save_to_file" : True,
         # save STP data to file
         "stp_recording" : False,
         # recording step for STP recording [ms], min 2.0
-        "stp_record_interval" : 10.0,
+        "stp_record_interval" : 100.0,
         # selective population for which the STP params (i.e. x, u) will be recorded
-        "stp_pop_recorded" : [0,1],
+        "stp_pop_recorded" : [0],
         # fraction of the selective population to be recorded for stp data
         "stp_fraction_recorded" : 0.1
     }

@@ -26,11 +26,7 @@ def get_weight(PSP_val, tau_m, C_m = 250.0, tau_syn_ex = 2.0):
             - tau_m / (tau_m - tau_syn_ex)) - (tau_m / tau_syn_ex) ** (
                 - tau_syn_ex / (tau_m - tau_syn_ex)))) ** (-1))
     PSC_e = (PSC_e_over_PSP_e * PSP_val)
-    
-    print("Peso dato direttamente in mV!")
-
-    return PSP_val
-    #return PSC_e
+    return PSC_e
 
 
 def noise_params(mu_ext, sigma_ext, tau_m, dt=0.1, C_m=250.):
@@ -40,6 +36,6 @@ def noise_params(mu_ext, sigma_ext, tau_m, dt=0.1, C_m=250.):
     Reference: https://nest-simulator.readthedocs.io/en/v3.1/model_details/noise_generator.html
     """
 
-    #return (C_m / tau_m) * mu_ext, math.sqrt(2/(tau_m*dt))*C_m*sigma_ext
-    return mu_ext, sigma_ext
+    return (C_m / tau_m) * mu_ext, math.sqrt(2/(tau_m*dt))*C_m*sigma_ext
+
 

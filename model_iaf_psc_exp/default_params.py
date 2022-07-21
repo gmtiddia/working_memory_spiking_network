@@ -78,11 +78,7 @@ default_syn_params = {
     # synaptic delays [ms, from min to max]
     "delay": [0.1, 1.0],
     # external current delays [ms, from min to max]
-    "delay_ext": [0.1, 1.0],
-    # possibility of doing self-connections
-    "autapses" : True,
-    # possibility of having multiple connections within two neurons
-    "multapses" : True}
+    "delay_ext": [0.1, 1.0]}
 
 default_network_params.update({'syn_params': default_syn_params})
 

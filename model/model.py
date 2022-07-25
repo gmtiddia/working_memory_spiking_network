@@ -357,7 +357,7 @@ class WMModel:
         start = self.network_params["background_input"]["start"]
         stop = self.network_params["background_input"]["stop"]
 
-        mean_I_ext_exc, stdI_ext_exc = noise_params(mu_exc, sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+        mean_I_ext_exc, stdI_ext_exc = noise_params(mu_exc, sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"], resolution=self.simulation_params["dt"])
 
         ng_exc_E = nest.Create("noise_generator")
         nest.SetStatus(ng_exc_E, {"mean" : mean_I_ext_exc,
@@ -366,7 +366,7 @@ class WMModel:
                                   "start" : start,
                                   "stop" : stop})
 
-        mean_I_ext_inh, stdI_ext_inh = noise_params(mu_inh, sigma_inh, self.network_params["neur_params"]["tau"][1], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+        mean_I_ext_inh, stdI_ext_inh = noise_params(mu_inh, sigma_inh, self.network_params["neur_params"]["tau"][1], dt=self.network_params["stimulation_params"]["dt_external_stim"], resolution=self.simulation_params["dt"])
 
         ng_inh_I = nest.Create("noise_generator")
         nest.SetStatus(ng_inh_I, {"mean" : mean_I_ext_inh,
@@ -379,7 +379,7 @@ class WMModel:
         #print("I EXC [pA]: {:.2f} +/- {:.2f}".format(mean_I_ext_exc, stdI_ext_exc))
         #print("I INH [pA]: {:.2f} +/- {:.2f}".format(-mean_I_ext_inh, stdI_ext_inh))
 
-        mean_I_ext_exc_end, stdI_ext_exc_end = noise_params(mu_exc_end, 0.0, self.network_params["neur_params"]["tau"][1], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+        mean_I_ext_exc_end, stdI_ext_exc_end = noise_params(mu_exc_end, 0.0, self.network_params["neur_params"]["tau"][1], dt=self.network_params["stimulation_params"]["dt_external_stim"], resolution=self.simulation_params["dt"])
 
         ng_offset = nest.Create("noise_generator")
         nest.SetStatus(ng_offset, {"mean" : mean_I_ext_exc_end,
@@ -408,7 +408,7 @@ class WMModel:
         origin = self.network_params["item_loading"]["origin"]
 
         for item in range(self.network_params["item_loading"]["nstim"]):
-            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"], resolution=self.simulation_params["dt"])
             I_cue = nest.Create("noise_generator")
             nest.SetStatus(I_cue, {"mean" : cue,
                                    "std" : std_cue,
@@ -436,7 +436,7 @@ class WMModel:
 
         # create the stimulus
         for i in range(self.network_params["nonspecific_readout_signals"]["nstim"]):
-            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_reac"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_reac"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"], resolution=self.simulation_params["dt"])
             I_cue = nest.Create("noise_generator")
             nest.SetStatus(I_cue, {"mean" : cue,
                                    "std" : std_cue,
@@ -464,7 +464,7 @@ class WMModel:
 
         for i in range(self.network_params["nonspecific_noise"]["nstim"]):
         # create the stimulus
-            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"], resolution=self.simulation_params["dt"])
             I_noise = nest.Create("noise_generator")
             nest.SetStatus(I_noise, {"mean" : cue,
                                      "std" : std_cue,
@@ -492,7 +492,7 @@ class WMModel:
 
         for i in range(len(times)):
         # create the stimulus
-            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_period_reac"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_period_reac"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"], resolution=self.simulation_params["dt"])
             I_nspec_signal = nest.Create("noise_generator")
             nest.SetStatus(I_nspec_signal, {"mean" : cue,
                                     "std" : std_cue,

@@ -12,17 +12,18 @@ import os
 
 # average external current expressed in the average variation 
 # of membrane potential elicited [mV]
-mu_exc = 23.7 
+mu_exc = 23.8
 # short-term plasticity variable u at the beginning of the simulation
-u_start = 0.19
+u_start = 0.19 #0.19
 # network params dict
 # here add the parameters to be edited. The rest of the parameters are in default_params.py
 network_p = {
     # excitatory input current [mV]
     'mu_exc': mu_exc,
+    'mu_inh': 21.0,
     # current used to go back to the spontaneous activity
-    'mu_exc_end': 22.7 - mu_exc,
-    'stp_params' : {'u0': u_start},
+    'mu_exc_end': 23.1 - mu_exc,
+    'stp_params' : {'u0': u_start, 'U': u_start},
     'syn_params' : {'autapses' : True, 'multapses' : True}}
 
 
@@ -38,7 +39,7 @@ simulation_p = {
     "data_path" : os.path.join(os.getcwd(), 'data/'),
     # number of OpenMP threads
     "threads" : 8,
-    "dt" : 0.1,
+    "dt" : 0.05,
     # overall simulation time
     "t_sim" : tsim + tpresim,
     # beginning of th current stimulus which diminishes overall background input
@@ -54,7 +55,7 @@ simulation_p = {
         # save STP data to file
         "stp_recording" : False,
         # recording step for STP recording [ms], min 2.0
-        "stp_record_interval" : 100.0,
+        "stp_record_interval" : 50.0,
         # selective population for which the STP params (i.e. x, u) will be recorded
         "stp_pop_recorded" : [0],
         # fraction of the selective population to be recorded for stp data

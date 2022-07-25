@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 def get_weight(PSP_val, tau_m, C_m = 250.0, tau_syn_ex = 2.0):
     """ Computes weight to elicit a change in the membrane potential.
@@ -26,20 +27,18 @@ def get_weight(PSP_val, tau_m, C_m = 250.0, tau_syn_ex = 2.0):
             - tau_m / (tau_m - tau_syn_ex)) - (tau_m / tau_syn_ex) ** (
                 - tau_syn_ex / (tau_m - tau_syn_ex)))) ** (-1))
     PSC_e = (PSC_e_over_PSP_e * PSP_val)
-    
-    print("Peso dato direttamente in mV!")
 
     return PSP_val
     #return PSC_e
 
 
-def noise_params(mu_ext, sigma_ext, tau_m, dt=0.1, C_m=250.):
+def noise_params(mu_ext, sigma_ext, tau_m, dt=1.0, C_m=250., resolution = 0.1):
     """
-    Returns mean and std for noise generator for parameters provided;
-    Default C_m for iaf_psc_exp.
-    Reference: https://nest-simulator.readthedocs.io/en/v3.1/model_details/noise_generator.html
+    Returns mean and std for noise generator for parameters provided
     """
 
-    #return (C_m / tau_m) * mu_ext, math.sqrt(2/(tau_m*dt))*C_m*sigma_ext
-    return mu_ext, sigma_ext
+    V_mean = mu_ext*(resolution/tau_m)
+    V_std = (sigma_ext / np.sqrt(( 1 - math.exp(-dt/tau_m) ) / ( 1 + math.exp(-dt/tau_m) )))*(resolution/tau_m)
+
+    return V_mean, V_std
 

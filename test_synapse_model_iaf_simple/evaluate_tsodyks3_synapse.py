@@ -36,7 +36,7 @@ tsodyks3_params = dict(fac_params3, synapse_model="tsodyks3_synapse")  # for tso
 ###############################################################################
 # Create three neurons.
 
-neuron = nest.Create("iaf_psc_exp", 4)
+neuron = nest.Create("iaf_simple", 4)
 
 ###############################################################################
 # Neuron one produces spikes. Neurons 2, 3 and 4 receive the spikes via the

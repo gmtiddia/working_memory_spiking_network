@@ -174,7 +174,9 @@ def figure2(stp = False, t=[], x=[], u=[], panel="A"):
     ax0.tick_params(labelsize=labelsize, axis ='y')
     ax0.set_yticks([0,80])
     ax0.set_ylim(0.0, 80.0)
-    ax0.set_xlim(1000.0, 5000.0)
+    x_min = 2000.0
+    x_max=6000.0
+    ax0.set_xlim(x_min, x_max)
     ax0.set_yticklabels(['0','80'])
     ax0.text(-0.095,1.0,panel, transform=ax0.transAxes, weight="bold", fontsize=labelsize+3)
     ax02=ax0.twinx()
@@ -187,13 +189,14 @@ def figure2(stp = False, t=[], x=[], u=[], panel="A"):
     #ax02.set_ylabel("x, u", fontsize=labelsize)
     plt.text(1.085, 0.65, 'x', color='red', transform=ax02.transAxes, fontsize=labelsize+5)
     plt.text(1.085, 0.35, 'u', color='blue', transform=ax02.transAxes, fontsize=labelsize+5)
+    
 
     ax02.tick_params(labelsize=labelsize)
     ax02.tick_params(axis ='y')
 
 
     # spontaneous rate
-    t_start2 = simulation_params["recording_params"]["spike_recording_params"]["start"] + 50.0
+    t_start2 = simulation_params["recording_params"]["spike_recording_params"]["start"] + 450.0
     t_stop2 = network_params["item_loading"]["origin"][0]
     # delay period
     t_start1 = network_params["item_loading"]["origin"][0] + network_params["stimulation_params"]["T_cue"]
@@ -205,6 +208,10 @@ def figure2(stp = False, t=[], x=[], u=[], panel="A"):
         t_stop1 = min(network_params["nonspecific_readout_signals"]["origin"][0], network_params["nonspecific_noise"]["origin"][0])
     else:
         t_stop1 = simulation_params["mu_end_origin"]
+
+    # put arrows indicating spontaneous activity and delay periods
+    ax0.hlines(y=0.0, xmin=t_start1, xmax=t_stop1, color="orange", linewidth=7)
+    ax0.hlines(y=0.0, xmin=t_start2, xmax=t_stop2, color="skyblue", linewidth=7)
 
     occurrencies1 = firing_rate(t_start1, t_stop1)
     occurrencies2 = firing_rate(t_start2, t_stop2)
@@ -229,6 +236,8 @@ def figure2(stp = False, t=[], x=[], u=[], panel="A"):
         ax1.set_xticks([0,5,10,15])
     ax1.tick_params(labelsize=labelsize)
     plt.subplots_adjust(left=0.06, right=0.976, top=0.925, bottom=0.207)
+    #plt.subplots_adjust(left=0.06, right=0.976, top=0.89, bottom=0.207)
+    #plt.suptitle("multapses and autapses disabled", fontsize=labelsize)
     plt.savefig(simulation_params['data_path']+"fig2{panel}.png".format(panel=panel))
     
     #plt.draw()
@@ -265,9 +274,9 @@ def figure3(stp=False, stp0= [], stp1 =[], panel="A"):
     ax0.plot(sr0[:,1], sr0[:,0]-[720 for i in sr0[:,0]], '.', color = "limegreen", label="Sel Pop {}".format(simulation_params["recording_params"]["pop_recorded"][0]))
     ax0.plot(sr1[:,1], sr1[:,0]-[720 for i in sr1[:,0]], '.', color = "k", label="Sel Pop {}".format(simulation_params["recording_params"]["pop_recorded"][1]))
     ax0.set_ylabel("# cell", color="k", fontsize=labelsize)
-    ax0.set_xlim(1500.0, 7000.0)
+    ax0.set_xlim(2000.0, 8000.0)
     if network_params["overlap"]:
-        ax0.set_xlim(1500.0, 8000.0)
+        ax0.set_xlim(2000.0, 8000.0)
     ax0.tick_params(labelsize=labelsize, pad=10, axis ='x')
     ax0.tick_params(labelsize=labelsize, axis ='y')
     ax0.set_yticks([0,80,160])
@@ -362,7 +371,7 @@ def figure4(stp=False, stp0= [], stp1 =[], stp2 = []):
     ax0.set_yticks([0,80,160,240])
     ax0.set_yticklabels(['0','80', '160', '240'])
     ax0.set_ylim(0.0, 240.0)
-    ax0.text(-0.095,1.0,panel, transform=ax0.transAxes, weight="bold", fontsize=labelsize+3)
+    #ax0.text(-0.095,1.0,panel, transform=ax0.transAxes, weight="bold", fontsize=labelsize+3)
     ax02=ax0.twinx()
     ax02.set_navigate(False)
     ax02.set_ylim(0,3.0)

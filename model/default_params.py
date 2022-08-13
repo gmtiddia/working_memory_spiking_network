@@ -23,17 +23,17 @@ default_network_params = {
     "N_inh": 2000,
     #mean external current [mV for exc population]
     # case A: single stable activity
-    "mu_excA": 22.80,
+    "mu_excA": 22.70,
     # case B: bistable regime synchronous
     "mu_excB": 23.70,
     # case C: bistable regime asynchronous
-    "mu_excC": 24.00,
+    "mu_excC": 24.05,
     # mean external current used in the simulation [mV for exc population]
-    "mu_exc": 24.30,
+    "mu_exc": 23.70,
     # mean external current used in the simulation [mV for inh population]
     "mu_inh": 20.5,
     # current offset to return at stable state
-    "mu_exc_end": 24.30 - 22.8,
+    "mu_exc_end": 23.7 - 22.7,
     # std of external current
     "sigma_exc": 1.0,
     "sigma_inh": 1.0}
@@ -93,7 +93,7 @@ default_stp_params = {
     # baseline utilization factor
     "U": 0.19,
     # u value at the beginning
-    "u0" : 0.25,
+    "u0" : 0.19,
     # x value at the beginning
     "x0" : 1.0,
     # recovery time of utilization factor [ms]
@@ -138,13 +138,13 @@ default_simulation_params = {
     # master seed for random number generators
     "master_seed" : 123456,
     # number of threads
-    "threads" : 1,
+    "threads" : 8,
     # simulation step (in ms)
-    "dt" : 0.1,
+    "dt" : 0.05,
     # simulated time (in ms)
-    "t_sim" : 5000.0,
+    "t_sim" : 6000.0,
     # offset origin [ms]
-    "mu_end_origin": 4500.0,
+    "mu_end_origin": 5200.0,
     "recording_params" : {
         # fraction of neurons recorded for each population
         "fraction_pop_recorded" : 0.1,
@@ -156,10 +156,11 @@ default_simulation_params = {
         # save short-term plasticity (STP) data
         "stp_recording" : False,
         # intervak for STP recording
-        "stp_record_interval" : 25.0,
+        "stp_record_interval" : 10.0,
         # populations for which the STP params have to be recorded
         "stp_pop_recorded" : [0],
         # fraction of neurons of a population for which STP params have to be recorded
+        # choose 1.0 to have smooth lines for STP variables
         "stp_fraction_recorded" : 0.1},
     # path in which simulation data will be saved 
     "data_path" : os.path.join(os.getcwd(), 'data/'),

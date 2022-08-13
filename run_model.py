@@ -12,7 +12,7 @@ import os
 
 # average external current expressed in the average variation 
 # of membrane potential elicited [mV]
-mu_exc = 23.7 
+mu_exc = 23.7
 # short-term plasticity variable u at the beginning of the simulation
 u_start = 0.19
 # network params dict
@@ -22,7 +22,7 @@ network_p = {
     'mu_exc': mu_exc,
     # current used to go back to the spontaneous activity
     'mu_exc_end': 22.7 - mu_exc,
-    'stp_params' : {'u0': u_start},
+    'stp_params' : {'u0': u_start, 'tau_F': 1500.0, 'tau_D': 200.0},
     'syn_params' : {'autapses' : True, 'multapses' : True}}
 
 
@@ -35,10 +35,10 @@ tsim = 3000.0
 # here add the parameters to be edited. The rest of the parameters are in default_params.py
 simulation_p = {
     # path to data
-    "data_path" : os.path.join(os.getcwd(), 'data/'),
+    "data_path" : os.path.join(os.getcwd(), 'data_provaaa/'),
     # number of OpenMP threads
     "threads" : 8,
-    "dt" : 0.1,
+    "dt" : 0.05,
     # overall simulation time
     "t_sim" : tsim + tpresim,
     # beginning of th current stimulus which diminishes overall background input
@@ -54,11 +54,11 @@ simulation_p = {
         # save STP data to file
         "stp_recording" : False,
         # recording step for STP recording [ms], min 2.0
-        "stp_record_interval" : 100.0,
+        "stp_record_interval" : 10.0,
         # selective population for which the STP params (i.e. x, u) will be recorded
-        "stp_pop_recorded" : [0],
+        "stp_pop_recorded" : [0, 1],
         # fraction of the selective population to be recorded for stp data
-        "stp_fraction_recorded" : 0.1
+        "stp_fraction_recorded" : 1.0
     }
 }
 
@@ -72,7 +72,7 @@ network.add_background_input(start=0.0, stop=tsim+tpresim)
 
 # to reproduce Figure 2A
 #network.add_item_loading_signals(pop_id=[0], origin=[tpresim])
-#network.add_nonspecific_readout_signal(origin=[tpresim+950.0])
+#network.add_nonspecific_readout_signal(origin=[tpresim+1100.0])
 
 # to reproduce Figure 2B and 2C
 network.add_item_loading_signals(pop_id=[0], origin=[tpresim])
@@ -80,7 +80,7 @@ network.add_item_loading_signals(pop_id=[0], origin=[tpresim])
 # to reproduce Figure 3A
 #network.add_item_loading_signals(pop_id=[0,1], origin=[tpresim,tpresim+3000.0])
 #network.add_periodic_sequence(intervals=[[tpresim+700.0, tpresim+1300.0], [tpresim+2000.0, tpresim+2900.0], [tpresim+3400, tpresim+5000.0]])
-#network.add_random_nonspecific_noise([tpresim+1500.0], frac = 0.15)
+#network.add_random_nonspecific_noise([tpresim+1550.0], frac = 0.15)
 
 # to reproduce Figure 3B
 #network.add_item_loading_signals(pop_id=[0,1], origin=[tpresim,tpresim+3000.0])
@@ -92,6 +92,7 @@ network.add_item_loading_signals(pop_id=[0], origin=[tpresim])
 
 # to reproduce Figure 4
 #network.add_item_loading_signals(pop_id=[0,1,2], origin=[tpresim, tpresim+3000.0, tpresim+6000.0])
+#network.add_item_loading_signals(pop_id=[0,1,2,3,4], origin=[tpresim, tpresim+500.0, tpresim+1000.0, tpresim+1500.0, tpresim+2000.0])
 
 # save used parameters into a json
 network.save_params()

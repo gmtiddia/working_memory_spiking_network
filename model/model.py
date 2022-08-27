@@ -139,7 +139,7 @@ class WMModel:
             'stop': stop
         }
         print("\n ##### NETWORK INPUTS #####\n")
-        print("Background input added:\nStart [ms]: {}\nStop [ms]: {}\nmu_exc [mV]: {}\nmu_inh [mv]: {}".format(start, stop, self.network_params["mu_exc"], self.network_params["mu_inh"]))
+        print("Background input added:\nStart [ms]: {}\nStop [ms]: {}\neta_exc [mV]: {}\neta_inh [mv]: {}".format(start, stop, self.network_params["eta_exc"], self.network_params["eta_inh"]))
 
         self.network_params.update({'background_input': background_input})
 
@@ -256,6 +256,7 @@ class WMModel:
         nest.ResetKernel()
         nest.SetKernelStatus({"print_time" : True,
                               "resolution": self.simulation_params["dt"],
+                              "rng_seed": self.simulation_params["master_seed"],
                               "local_num_threads": self.simulation_params["threads"]})
     
 
@@ -349,15 +350,15 @@ class WMModel:
 
         """
 
-        mu_exc = self.network_params["mu_exc"]
-        mu_inh = self.network_params["mu_inh"]
-        mu_exc_end = self.network_params["mu_exc_end"]
-        sigma_exc = self.network_params["sigma_exc"]
-        sigma_inh = self.network_params["sigma_inh"]
+        eta_exc = self.network_params["eta_exc"]
+        eta_inh = self.network_params["eta_inh"]
+        eta_exc_end = self.network_params["eta_exc_end"]
+        Sigma_exc = self.network_params["Sigma_exc"]
+        Sigma_inh = self.network_params["Sigma_inh"]
         start = self.network_params["background_input"]["start"]
         stop = self.network_params["background_input"]["stop"]
 
-        mean_I_ext_exc, stdI_ext_exc = noise_params(mu_exc, sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+        mean_I_ext_exc, stdI_ext_exc = noise_params(eta_exc, Sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
 
         ng_exc_E = nest.Create("noise_generator")
         nest.SetStatus(ng_exc_E, {"mean" : mean_I_ext_exc,
@@ -366,7 +367,7 @@ class WMModel:
                                   "start" : start,
                                   "stop" : stop})
 
-        mean_I_ext_inh, stdI_ext_inh = noise_params(mu_inh, sigma_inh, self.network_params["neur_params"]["tau"][1], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+        mean_I_ext_inh, stdI_ext_inh = noise_params(eta_inh, Sigma_inh, self.network_params["neur_params"]["tau"][1], dt=self.network_params["stimulation_params"]["dt_external_stim"])
 
         ng_inh_I = nest.Create("noise_generator")
         nest.SetStatus(ng_inh_I, {"mean" : mean_I_ext_inh,
@@ -379,13 +380,13 @@ class WMModel:
         #print("I EXC [pA]: {:.2f} +/- {:.2f}".format(mean_I_ext_exc, stdI_ext_exc))
         #print("I INH [pA]: {:.2f} +/- {:.2f}".format(-mean_I_ext_inh, stdI_ext_inh))
 
-        mean_I_ext_exc_end, stdI_ext_exc_end = noise_params(mu_exc_end, 0.0, self.network_params["neur_params"]["tau"][1], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+        mean_I_ext_exc_end, stdI_ext_exc_end = noise_params(eta_exc_end, 0.0, self.network_params["neur_params"]["tau"][1], dt=self.network_params["stimulation_params"]["dt_external_stim"])
 
         ng_offset = nest.Create("noise_generator")
         nest.SetStatus(ng_offset, {"mean" : mean_I_ext_exc_end,
                                   "std" : stdI_ext_exc_end,
                                   "dt" : self.network_params["stimulation_params"]["dt_external_stim"],
-                                  "origin" : self.simulation_params["mu_end_origin"]})
+                                  "origin" : self.simulation_params["eta_end_origin"]})
 
 
         self.exc_bkg_input = ng_exc_E
@@ -403,12 +404,12 @@ class WMModel:
 
         self.item_loading_signals = []
 
-        mu_exc = self.network_params["mu_exc"]
-        sigma_exc = 0.0 #self.network_params["sigma_exc"] #0.0
+        eta_exc = self.network_params["eta_exc"]
+        Sigma_exc = 0.0 #self.network_params["Sigma_exc"] #0.0
         origin = self.network_params["item_loading"]["origin"]
 
         for item in range(self.network_params["item_loading"]["nstim"]):
-            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+            cue, std_cue = noise_params(eta_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
             I_cue = nest.Create("noise_generator")
             nest.SetStatus(I_cue, {"mean" : cue,
                                    "std" : std_cue,
@@ -430,13 +431,13 @@ class WMModel:
 
         self.nonspecific_readout_signals = []
 
-        mu_exc = self.network_params["mu_exc"]
-        sigma_exc = 0.0 #self.network_params["sigma_exc"] #0.0
+        eta_exc = self.network_params["eta_exc"]
+        Sigma_exc = 0.0 #self.network_params["Sigma_exc"] #0.0
         origin = self.network_params["nonspecific_readout_signals"]["origin"]
 
         # create the stimulus
         for i in range(self.network_params["nonspecific_readout_signals"]["nstim"]):
-            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_reac"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+            cue, std_cue = noise_params(eta_exc*(self.network_params["stimulation_params"]["A_reac"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
             I_cue = nest.Create("noise_generator")
             nest.SetStatus(I_cue, {"mean" : cue,
                                    "std" : std_cue,
@@ -458,13 +459,13 @@ class WMModel:
 
         self.random_noise = []
 
-        mu_exc = self.network_params["mu_exc"]
-        sigma_exc = 0.0 #self.network_params["sigma_exc"] #0.0
+        eta_exc = self.network_params["eta_exc"]
+        Sigma_exc = 0.0 #self.network_params["Sigma_exc"] #0.0
         origin = self.network_params["nonspecific_noise"]["origin"]
 
         for i in range(self.network_params["nonspecific_noise"]["nstim"]):
         # create the stimulus
-            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+            cue, std_cue = noise_params(eta_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
             I_noise = nest.Create("noise_generator")
             nest.SetStatus(I_noise, {"mean" : cue,
                                      "std" : std_cue,
@@ -486,13 +487,13 @@ class WMModel:
 
         self.periodic_sequence = []
 
-        mu_exc = self.network_params["mu_exc"]
-        sigma_exc = 0.0 #self.network_params["sigma_exc"]
+        eta_exc = self.network_params["eta_exc"]
+        Sigma_exc = 0.0 #self.network_params["Sigma_exc"]
         times = self.network_params["periodic_sequence"]["times"]
 
         for i in range(len(times)):
         # create the stimulus
-            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_period_reac"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+            cue, std_cue = noise_params(eta_exc*(self.network_params["stimulation_params"]["A_period_reac"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
             I_nspec_signal = nest.Create("noise_generator")
             nest.SetStatus(I_nspec_signal, {"mean" : cue,
                                     "std" : std_cue,

@@ -5,23 +5,22 @@ import os
 # Script needed to run the model.
 # Please choose the values of average external currents and the starting value of u
 
-#         mu_ext   u0
+#         eta_ext   u0
 # Fig 2A - 22.7  - 0.19 (single stable state activity)
 # Fig 2B - 23.7  - 0.19 (bi-stable activity with synchronous spiking activity)
-# Fig 2C - 24.05 - 0.19 (bi-stable activity with asynchronous spiking activity)
+# Fig 2C - 24.1  - 0.19 (bi-stable activity with asynchronous spiking activity)
 
-# average external current expressed in the average variation 
-# of membrane potential elicited [mV]
-mu_exc = 23.7
+# average variation of membrane potential elicited by external current [mV]
+eta_exc = 23.7
 # short-term plasticity variable u at the beginning of the simulation
 u_start = 0.19
 # network params dict
-# here add the parameters to be edited. The rest of the parameters are in default_params.py
+# here add the parameters to be edited. The rest of the parameters are in model/default_params.py
 network_p = {
     # excitatory input current [mV]
-    'mu_exc': mu_exc,
+    'eta_exc': eta_exc,
     # current used to go back to the spontaneous activity
-    'mu_exc_end': 22.7 - mu_exc,
+    'eta_exc_end': 22.7 - eta_exc,
     'stp_params' : {'u0': u_start, 'tau_F': 1500.0, 'tau_D': 200.0},
     'syn_params' : {'autapses' : True, 'multapses' : True}}
 
@@ -38,11 +37,10 @@ simulation_p = {
     "data_path" : os.path.join(os.getcwd(), 'data/'),
     # number of OpenMP threads
     "threads" : 8,
-    "dt" : 0.05,
     # overall simulation time
     "t_sim" : tsim + tpresim,
     # beginning of th current stimulus which diminishes overall background input
-    "mu_end_origin": tsim + tpresim - 800.0,
+    "eta_end_origin": tsim + tpresim - 800.0,
     "recording_params" : {
         # fraction of neurons recorded for each selective population
         "fraction_pop_recorded" : 1.0,
@@ -53,7 +51,7 @@ simulation_p = {
         "save_to_file" : True,
         # save STP data to file
         "stp_recording" : False,
-        # recording step for STP recording [ms], min 2.0
+        # recording step for STP recording [ms]
         "stp_record_interval" : 10.0,
         # selective population for which the STP params (i.e. x, u) will be recorded
         "stp_pop_recorded" : [0, 1],
@@ -68,7 +66,7 @@ network = WMModel(network_p, simulation_p)
 # add background
 network.add_background_input(start=0.0, stop=tsim+tpresim)
 
-# instructions to reproduce the plots shown in the article. Please choose the correct value of mu_exc and u0 and then untag the desired lines
+# instructions to reproduce the plots shown in the article. Please choose the correct value of eta_exc and u0 and then untag the desired lines
 
 # to reproduce Figure 2A
 #network.add_item_loading_signals(pop_id=[0], origin=[tpresim])

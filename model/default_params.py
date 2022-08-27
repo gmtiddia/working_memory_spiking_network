@@ -23,20 +23,20 @@ default_network_params = {
     "N_inh": 2000,
     #mean external current [mV for exc population]
     # case A: single stable activity
-    "mu_excA": 22.70,
+    "eta_excA": 22.70,
     # case B: bistable regime synchronous
-    "mu_excB": 23.70,
+    "eta_excB": 23.70,
     # case C: bistable regime asynchronous
-    "mu_excC": 24.05,
+    "eta_excC": 24.10,
     # mean external current used in the simulation [mV for exc population]
-    "mu_exc": 23.70,
+    "eta_exc": 23.70,
     # mean external current used in the simulation [mV for inh population]
-    "mu_inh": 20.5,
+    "eta_inh": 20.5,
     # current offset to return at stable state
-    "mu_exc_end": 23.7 - 22.7,
-    # std of external current
-    "sigma_exc": 1.0,
-    "sigma_inh": 1.0}
+    "eta_exc_end": 23.70 - 22.70,
+    # std of external current [mV]
+    "Sigma_exc": 1.0,
+    "Sigma_inh": 1.0}
 
 """
 Single-cell parameters
@@ -136,7 +136,7 @@ Simulation parameters
 
 default_simulation_params = {
     # master seed for random number generators
-    "master_seed" : 123456,
+    "master_seed" : 143202461,
     # number of threads
     "threads" : 8,
     # simulation step (in ms)
@@ -144,7 +144,7 @@ default_simulation_params = {
     # simulated time (in ms)
     "t_sim" : 6000.0,
     # offset origin [ms]
-    "mu_end_origin": 5200.0,
+    "eta_end_origin": 5200.0,
     "recording_params" : {
         # fraction of neurons recorded for each population
         "fraction_pop_recorded" : 0.1,

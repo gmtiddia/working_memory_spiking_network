@@ -129,7 +129,7 @@ def get_firing_rate_plot():
     if("nonspecific_readout_signals" in network_params and "nonspecific_noise" in network_params):
         t_stop1 = min(network_params["nonspecific_readout_signals"]["origin"][0], network_params["nonspecific_noise"]["origin"][0])
     else:
-        t_stop1 = simulation_params["mu_end_origin"]
+        t_stop1 = simulation_params["eta_end_origin"]
     
     
     firing_rate_hist(spike_recorder, t_start1, t_stop1, t_start2, t_stop2, plot=True)
@@ -207,7 +207,7 @@ def figure2(stp = False, t=[], x=[], u=[], panel="A"):
     elif("nonspecific_readout_signals" in network_params and "nonspecific_noise" in network_params):
         t_stop1 = min(network_params["nonspecific_readout_signals"]["origin"][0], network_params["nonspecific_noise"]["origin"][0])
     else:
-        t_stop1 = simulation_params["mu_end_origin"]
+        t_stop1 = simulation_params["eta_end_origin"]
 
     # put arrows indicating spontaneous activity and delay periods
     ax0.hlines(y=0.0, xmin=t_start1, xmax=t_stop1, color="orange", linewidth=7)

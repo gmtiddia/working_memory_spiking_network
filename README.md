@@ -1,5 +1,7 @@
 # working_memory_spiking_network
-Spiking network model and analysis scripts for the preprint "Simulations of Working Memory Spiking Networks driven by Short-Term Plasticity"
+Spiking network model and analysis scripts for the article:
+  Tiddia et al., Simulations of Working Memory Spiking Networks driven by Short-Term Plasticity, Frontiers in Integrative Neuroscience, 2022
+  DOI: https://doi.org/10.3389/fnint.2022.972055
 
 --------------------------------------------------------------------------------
 

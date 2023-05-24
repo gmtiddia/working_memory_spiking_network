@@ -17,6 +17,7 @@ import shutil
 import sys
 import json
 import pandas as pd
+from numpyencoder import NumpyEncoder
 import time
 from copy import deepcopy
 from model.default_params import default_network_params, default_simulation_params
@@ -81,7 +82,11 @@ class WMModel:
             print('Data directory created.')
         print('Data will be written to %s' % self.data_path)
         
-        self.c = self.network_params["c"]
+        self.cEE = self.network_params["cEE"]
+        self.cEEsp = self.network_params["cEEsp"]
+        self.cII = self.network_params["cII"]
+        self.cEI = self.network_params["cEI"]
+        self.cIE = self.network_params["cIE"]
         self.p = self.network_params["p"]
         self.f = self.network_params["f"]
         
@@ -99,9 +104,9 @@ class WMModel:
 
         print("Writing dict params to file...", end = " ")
         with open(self.simulation_params['data_path'] + "network_params.json", 'w') as fp:
-            json.dump(self.network_params, fp)
+            json.dump(self.network_params, fp, cls=NumpyEncoder)
         with open(self.simulation_params['data_path'] + "simulation_params.json", 'w') as fp:
-            json.dump(self.simulation_params, fp)
+            json.dump(self.simulation_params, fp, cls=NumpyEncoder)
         
         print("Done")
 
@@ -115,10 +120,25 @@ class WMModel:
 
         if(self.simulation_params["recording_params"]["save_to_file"]):
             for i, sr in enumerate(self.spike_recorders):
-                fn = "spikedata" + str(self.simulation_params["recording_params"]["pop_recorded"][i])+".dat"
+                fn = "spikedata" + str(i) +".dat"
                 spikes = np.array([sr.get("events")["senders"], sr.get("events")["times"]])
                 spikes = spikes.T
                 np.savetxt(self.simulation_params['data_path'] + fn, spikes)
+
+
+    def save_voltage_data(self):
+        """
+        Save membrane potential in files named 'voltageX.dat' where X is the pop recorded id
+        (i.e. the id of the excitatory selective sub-population)
+
+        """
+
+        if(self.simulation_params["recording_params"]["save_to_file"]):
+            for i, m in enumerate(self.multimeters):
+                fn = "voltage" + str(i)+".dat"
+                voltage = np.array([m.get("events")["senders"], m.get("events")["times"], m.get("events")["V_m"]])
+                voltage = voltage.T
+                np.savetxt(self.simulation_params['data_path'] + fn, voltage)
 
 
     def add_background_input(self, start=0.0, stop=1000.0, origin = 1000.0):
@@ -139,7 +159,7 @@ class WMModel:
             'stop': stop
         }
         print("\n ##### NETWORK INPUTS #####\n")
-        print("Background input added:\nStart [ms]: {}\nStop [ms]: {}\nmu_exc [mV]: {}\nmu_inh [mv]: {}".format(start, stop, self.network_params["mu_exc"], self.network_params["mu_inh"]))
+        print("Background input added:\nStart [ms]: {}\nStop [ms]: {}\neta_exc [mV]: {}\neta_inh [mv]: {}".format(start, stop, self.network_params["eta_exc"], self.network_params["eta_inh"]))
 
         self.network_params.update({'background_input': background_input})
 
@@ -173,7 +193,48 @@ class WMModel:
             print("Item loaded to sub-population {} at {} ms.".format(pop_id[i], origin[i]))
         
 
-    def add_nonspecific_readout_signal(self, origin = [2000.0]):
+    def add_sequential_item_loading_signals(self, nseq = 2, pop_id=[0], origin=[1000.0], T_element=100.0, element=[True, True]):
+        """
+        Add item loading signal to the pop_id-th excitatory population by sequentially stimulating the
+        neurons of the population, using the parameters previously given.
+
+        Parameters
+        ----------
+            nseq : int
+                The number of subgroup of neurons to be stimulated sequentially
+            pop_id : list of int
+                The population to which the items are loaded
+            origin : list of float
+                The origin of the item loading stimulations (in ms)
+            T_element: float
+                The duration of the signal denoting the element of a sequence
+            element: list of bool
+                Presence of a certain element of a sequence
+
+        """
+
+        if len(pop_id) != len(origin):
+            raise ValueError("pop_id and origin must have the same dimension.")
+        if len(element) != nseq:
+            raise ValueError("element must have a dimension equal to nseq.")
+        else:
+            item_loading = {
+                'nstim' : len(pop_id),
+                'nseq' : nseq,
+                'pop_id': pop_id,
+                'origin': origin,
+                'T_element': T_element,
+                'element': element
+                }
+
+            self.network_params.update({'seq_item_loading': item_loading})
+        
+        print("\nItems loading sequential:")
+        for i in range(len(pop_id)):
+            print("Item loaded to sub-population {} at {} ms.".format(pop_id[i], origin[i]))
+
+
+    def add_nonspecific_readout_signal(self, origin = [2000.0], specific = False, popids = [0]):
         """
         Add nonspecific readout signal to the whole excitatory population using the parameters previously given.
 
@@ -186,7 +247,9 @@ class WMModel:
 
         nonspecific_readout_signal = {
             'nstim' : len(origin),
-            'origin' : origin
+            'origin' : origin,
+            'specific' : specific,
+            'popids' : popids
         }
 
 
@@ -221,25 +284,31 @@ class WMModel:
         self.network_params.update({'nonspecific_noise': nonspecific_noise})
 
     
-    def add_periodic_sequence(self, intervals = [[1000.0, 1500.0]]):
+    def add_periodic_sequence(self, intervals = [[1000.0, 1500.0]], popid = [0], selective_target=False):
         """
         Add nonspecific signal-like periodic sequence to the excitatory population. 
         Similar to the nonspecific readout signal, it is shorter in time.
 
         Parameters
             times : list containing the beginning of each periodic stimuli
+            popid : population id of the targeted population, if selective_target=True
+            selective_target : makes the signal specific (True) or aspecific (False)
         """
 
         times = []
+        popids = []
         for i in range(len(intervals)):
             t0 = intervals[i][0]
             t1 = intervals[i][1]
             nstim = int((t1-t0)/self.network_params["stimulation_params"]["period"]) + 1
             for n in range(nstim):
+                popids.append(popid[i])
                 times.append(t0+n*self.network_params["stimulation_params"]["period"])
 
         periodic_sequence = {
-            'times': times
+            'times': times,
+            'popid': popids,
+            'selective_target': selective_target
         }
 
         print("\nPeriodic sequences:")
@@ -256,6 +325,7 @@ class WMModel:
         nest.ResetKernel()
         nest.SetKernelStatus({"print_time" : True,
                               "resolution": self.simulation_params["dt"],
+                              "rng_seed": self.simulation_params["master_seed"],
                               "local_num_threads": self.simulation_params["threads"]})
     
 
@@ -270,24 +340,36 @@ class WMModel:
         self.exc_populations = []
 
         # whole exc neurons
-        self.exc_population = nest.Create("iaf_simple", self.network_params["N_exc"])
+        self.exc_population = nest.Create("iaf_psc_exp_multisynapse", self.network_params["N_exc"])
         nest.SetStatus(self.exc_population, {"tau_m": self.network_params["neur_params"]["tau"][0],
                                              "t_ref": self.network_params["neur_params"]["t_ref"][0],
                                              "V_th": self.network_params["neur_params"]["V_th"][0],
                                              "V_reset": self.network_params["neur_params"]["V_reset"][0],
                                              "E_L": self.network_params["neur_params"]["E_L"][0],
-                                             "V_m": self.network_params["neur_params"]["V_m"][0]})
+                                             "V_m": self.network_params["neur_params"]["V_m"][0],
+                                             "tau_syn": self.network_params["neur_params"]["tau_syn"]})
         
         #whole inh neurons
-        self.inh_population = nest.Create("iaf_simple", self.network_params["N_inh"])
+        self.inh_population = nest.Create("iaf_psc_exp_multisynapse", self.network_params["N_inh"])
         nest.SetStatus(self.inh_population, {"tau_m" : self.network_params["neur_params"]["tau"][1],
                                              "t_ref" : self.network_params["neur_params"]["t_ref"][1],
                                              "V_th" : self.network_params["neur_params"]["V_th"][1],
                                              "V_reset" : self.network_params["neur_params"]["V_reset"][1],
                                              "E_L" : self.network_params["neur_params"]["E_L"][1],
-                                             "V_m" : self.network_params["neur_params"]["V_m"][1]})
+                                             "V_m" : self.network_params["neur_params"]["V_m"][1],
+                                             "tau_syn": self.network_params["neur_params"]["tau_syn"]})
         
-        
+        if(self.network_params["inhibition"]=="new"):
+            # new implementation for inhibition: each exc population has its own inhibitory population
+            self.inh_populations = []
+            pop_index = 0
+            for i in range(self.p):
+                dum = self.inh_population[pop_index:pop_index+int(self.f*self.network_params["N_inh"])]
+                pop_index += int(self.f*self.network_params["N_inh"])
+                self.inh_populations.append(dum)
+                
+            self.inh_populations.append(self.inh_population[pop_index:self.network_params["N_inh"]])
+
         if(self.network_params["overlap"]):
             # subpopulations chosen randomly
             pop_index = np.arange(self.network_params["N_exc"])
@@ -349,16 +431,20 @@ class WMModel:
 
         """
 
-        mu_exc = self.network_params["mu_exc"]
-        mu_inh = self.network_params["mu_inh"]
-        mu_exc_end = self.network_params["mu_exc_end"]
-        sigma_exc = self.network_params["sigma_exc"]
-        sigma_inh = self.network_params["sigma_inh"]
+        eta_exc = self.network_params["eta_exc"]
+        eta_inh = self.network_params["eta_inh"]
+        eta_exc_end = self.network_params["eta_exc_end"]
+        Sigma_exc = self.network_params["Sigma_exc"]
+        Sigma_inh = self.network_params["Sigma_inh"]
+        fr = self.network_params["fr_eta"]
+        amplitude = self.network_params["A_eta"]*eta_exc
         start = self.network_params["background_input"]["start"]
         stop = self.network_params["background_input"]["stop"]
 
-        mean_I_ext_exc, stdI_ext_exc = noise_params(mu_exc, sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
-
+        mean_I_ext_exc, stdI_ext_exc = noise_params(eta_exc, Sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+        
+        # excitatory current to exc neurons as usual + ac generator with no offset
+        
         ng_exc_E = nest.Create("noise_generator")
         nest.SetStatus(ng_exc_E, {"mean" : mean_I_ext_exc,
                                   "std" : stdI_ext_exc,
@@ -366,7 +452,14 @@ class WMModel:
                                   "start" : start,
                                   "stop" : stop})
 
-        mean_I_ext_inh, stdI_ext_inh = noise_params(mu_inh, sigma_inh, self.network_params["neur_params"]["tau"][1], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+        ac_exc_E = nest.Create("ac_generator")
+        nest.SetStatus(ac_exc_E, {"offset" : 0.0,
+                                  "amplitude" : amplitude,
+                                  "frequency" : fr,
+                                  "start" : start,#self.network_params["item_loading"]["origin"][0]+self.network_params["stimulation_params"]["T_cue"],
+                                  "stop" : stop})
+
+        mean_I_ext_inh, stdI_ext_inh = noise_params(eta_inh, Sigma_inh, self.network_params["neur_params"]["tau"][1], dt=self.network_params["stimulation_params"]["dt_external_stim"])
 
         ng_inh_I = nest.Create("noise_generator")
         nest.SetStatus(ng_inh_I, {"mean" : mean_I_ext_inh,
@@ -379,16 +472,17 @@ class WMModel:
         #print("I EXC [pA]: {:.2f} +/- {:.2f}".format(mean_I_ext_exc, stdI_ext_exc))
         #print("I INH [pA]: {:.2f} +/- {:.2f}".format(-mean_I_ext_inh, stdI_ext_inh))
 
-        mean_I_ext_exc_end, stdI_ext_exc_end = noise_params(mu_exc_end, 0.0, self.network_params["neur_params"]["tau"][1], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+        mean_I_ext_exc_end, stdI_ext_exc_end = noise_params(eta_exc_end, 0.0, self.network_params["neur_params"]["tau"][1], dt=self.network_params["stimulation_params"]["dt_external_stim"])
 
         ng_offset = nest.Create("noise_generator")
         nest.SetStatus(ng_offset, {"mean" : mean_I_ext_exc_end,
                                   "std" : stdI_ext_exc_end,
                                   "dt" : self.network_params["stimulation_params"]["dt_external_stim"],
-                                  "origin" : self.simulation_params["mu_end_origin"]})
+                                  "origin" : self.simulation_params["eta_end_origin"]})
 
 
         self.exc_bkg_input = ng_exc_E
+        self.exc_ac_input = ac_exc_E
         self.inh_bkg_input = ng_inh_I
         self.exc_offset = ng_offset
 
@@ -403,12 +497,12 @@ class WMModel:
 
         self.item_loading_signals = []
 
-        mu_exc = self.network_params["mu_exc"]
-        sigma_exc = 0.0 #self.network_params["sigma_exc"] #0.0
+        eta_exc = self.network_params["eta_exc"]
+        Sigma_exc = 0.0 #self.network_params["Sigma_exc"] #0.0
         origin = self.network_params["item_loading"]["origin"]
 
         for item in range(self.network_params["item_loading"]["nstim"]):
-            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+            cue, std_cue = noise_params(eta_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
             I_cue = nest.Create("noise_generator")
             nest.SetStatus(I_cue, {"mean" : cue,
                                    "std" : std_cue,
@@ -418,6 +512,38 @@ class WMModel:
                                    "stop" : self.network_params["stimulation_params"]["T_cue"]})
             
             self.item_loading_signals.append(I_cue)
+
+    
+    def create_sequential_item_loading_signals(self):
+        """
+        Computes sequential item loading signals.
+
+        Returns the list seq_item_loading_signals contaning the item loading input currents.
+
+        """
+
+        self.seq_item_loading_signals = []
+
+        eta_exc = self.network_params["eta_exc"]
+        Sigma_exc = 0.0 #self.network_params["Sigma_exc"]
+        origin = self.network_params["seq_item_loading"]["origin"]
+        nseq = self.network_params["seq_item_loading"]["nseq"]
+        tseq = self.network_params["seq_item_loading"]["T_element"]
+
+        for item in range(self.network_params["seq_item_loading"]["nstim"]):
+            cue, std_cue = noise_params(eta_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+            # create nseq noise generators
+            I_cue = nest.Create("noise_generator", nseq)
+            for sq in range(nseq):
+                # adapt start and stop of the signal to have sequential stimulation
+                nest.SetStatus(I_cue[sq], {"mean" : cue,
+                                        "std" : std_cue,
+                                        "dt" : self.network_params["stimulation_params"]["dt_external_stim"],
+                                        "origin" : origin[item],
+                                        "start" : tseq*sq,
+                                        "stop" : tseq*(sq+1)})
+            
+            self.seq_item_loading_signals.append(I_cue)
 
         
     def create_nonspecific_readout_signals(self):
@@ -430,13 +556,13 @@ class WMModel:
 
         self.nonspecific_readout_signals = []
 
-        mu_exc = self.network_params["mu_exc"]
-        sigma_exc = 0.0 #self.network_params["sigma_exc"] #0.0
+        eta_exc = self.network_params["eta_exc"]
+        Sigma_exc = 0.0 #self.network_params["Sigma_exc"] #0.0
         origin = self.network_params["nonspecific_readout_signals"]["origin"]
 
         # create the stimulus
         for i in range(self.network_params["nonspecific_readout_signals"]["nstim"]):
-            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_reac"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+            cue, std_cue = noise_params(eta_exc*(self.network_params["stimulation_params"]["A_reac"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
             I_cue = nest.Create("noise_generator")
             nest.SetStatus(I_cue, {"mean" : cue,
                                    "std" : std_cue,
@@ -458,13 +584,13 @@ class WMModel:
 
         self.random_noise = []
 
-        mu_exc = self.network_params["mu_exc"]
-        sigma_exc = 0.0 #self.network_params["sigma_exc"] #0.0
+        eta_exc = self.network_params["eta_exc"]
+        Sigma_exc = 0.0 #self.network_params["Sigma_exc"] #0.0
         origin = self.network_params["nonspecific_noise"]["origin"]
 
         for i in range(self.network_params["nonspecific_noise"]["nstim"]):
         # create the stimulus
-            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+            cue, std_cue = noise_params(eta_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
             I_noise = nest.Create("noise_generator")
             nest.SetStatus(I_noise, {"mean" : cue,
                                      "std" : std_cue,
@@ -486,13 +612,13 @@ class WMModel:
 
         self.periodic_sequence = []
 
-        mu_exc = self.network_params["mu_exc"]
-        sigma_exc = 0.0 #self.network_params["sigma_exc"]
+        eta_exc = self.network_params["eta_exc"]
+        Sigma_exc = 0.0 #self.network_params["Sigma_exc"]
         times = self.network_params["periodic_sequence"]["times"]
 
         for i in range(len(times)):
         # create the stimulus
-            cue, std_cue = noise_params(mu_exc*(self.network_params["stimulation_params"]["A_period_reac"]-1.0), sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
+            cue, std_cue = noise_params(eta_exc*(self.network_params["stimulation_params"]["A_period_reac"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
             I_nspec_signal = nest.Create("noise_generator")
             nest.SetStatus(I_nspec_signal, {"mean" : cue,
                                     "std" : std_cue,
@@ -512,7 +638,10 @@ class WMModel:
 
         print("Creating network external inputs...", end = ' ')
         self.create_background_input()
-        self.create_item_loading_signals()
+        if("item_loading" in self.network_params):
+            self.create_item_loading_signals()
+        if("seq_item_loading" in self.network_params):
+            self.create_sequential_item_loading_signals()
         if("nonspecific_readout_signals" in self.network_params):
             self.create_nonspecific_readout_signals()
         if("nonspecific_noise" in self.network_params):
@@ -524,18 +653,32 @@ class WMModel:
     
     def create_recording_devices(self):
         """
-        Creation of the recording devices (i.e. spike recorders)
+        Creation of the recording devices (i.e. spike recorders and multimeters for measuring the current)
 
         """
 
-        print("Creating network external inputs...", end = ' ')
+        print("Creating recording devices...", end = ' ')
         
         self.spike_recorders = []
-        for sr in range(len(self.simulation_params["recording_params"]["pop_recorded"])):
+        if(self.simulation_params["recording_params"]["pop_recorded"]=="all"):
+            # selective populations + non-selective pop + inhibitory pop
+            n_recorders = self.p + 2
+        else:
+            n_recorders = len(self.simulation_params["recording_params"]["pop_recorded"])
+
+        for sr in range(n_recorders):
             s = nest.Create("spike_recorder")
             nest.SetStatus(s, {"start" : self.simulation_params["recording_params"]["spike_recording_params"]["start"]})
 
             self.spike_recorders.append(s)
+    
+        if(self.simulation_params["recording_params"]["record_membrane_potential"]):
+            self.multimeters = []
+            for m in range(self.p):
+                mult = nest.Create("multimeter")
+                nest.SetStatus(mult, {"record_from": ["V_m"]})
+            
+                self.multimeters.append(mult)
 
         print("Done")
 
@@ -557,8 +700,14 @@ class WMModel:
                 if more_print:
                     print("\tSource: selective population ", j+1)
                 con_dict = {'rule': 'fixed_indegree', 
-                            'indegree': int(self.f*self.c*self.network_params["N_exc"]),
+                            'indegree': int(self.f*self.cEE*self.network_params["N_exc"]),
                             'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                if (self.cEEsp == 1.0):
+                    con_dict1 = {'rule': 'all_to_all'}
+                else:
+                    con_dict1 = {'rule': 'fixed_indegree',
+                                'indegree': int(self.f*self.cEEsp*self.network_params["N_exc"]),
+                                'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
                 if i==j:
                     syn_dict = {"synapse_model": "tsodyks3_synapse",
                                 "weight": get_weight(self.network_params["syn_params"]["J_p"], self.network_params["neur_params"]["tau"][0]),
@@ -567,8 +716,9 @@ class WMModel:
                                 "tau_fac": self.network_params["stp_params"]["tau_F"],
                                 "U": self.network_params["stp_params"]["U"],
                                 "u": self.network_params["stp_params"]["u0"],
-                                "x": self.network_params["stp_params"]["x0"]}
-                    nest.Connect(self.exc_populations[j], self.exc_populations[i], con_dict, syn_dict)
+                                "x": self.network_params["stp_params"]["x0"],
+                                "receptor_type": 1}
+                    nest.Connect(self.exc_populations[j], self.exc_populations[i], con_dict1, syn_dict)
                 else:
                     syn_dict = {"synapse_model": "tsodyks3_synapse",
                                 "weight": get_weight(self.network_params["syn_params"]["J_b"], self.network_params["neur_params"]["tau"][0]),
@@ -577,13 +727,14 @@ class WMModel:
                                 "tau_fac": self.network_params["stp_params"]["tau_F"],
                                 "U": self.network_params["stp_params"]["U"],
                                 "u": self.network_params["stp_params"]["u0"],
-                                "x": self.network_params["stp_params"]["x0"]}
+                                "x": self.network_params["stp_params"]["x0"],
+                                "receptor_type": 2}
                     nest.Connect(self.exc_populations[j], self.exc_populations[i], con_dict, syn_dict)
             
             # indegrees from the other exc neurons
             if more_print:
                 print("\tSource: non-selective exc pop")
-            con_dict = {'rule': 'fixed_indegree', 'indegree': int((1.0-self.network_params["syn_params"]["gamma_0"])*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
+            con_dict = {'rule': 'fixed_indegree', 'indegree': int((1.0-self.network_params["syn_params"]["gamma_0"])*self.cEE*(1.0-self.f*self.p)*self.network_params["N_exc"]),
                         'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
             syn_dict = {"synapse_model": "tsodyks3_synapse",
                         "weight": get_weight(self.network_params["syn_params"]["J_b"], self.network_params["neur_params"]["tau"][0]),
@@ -592,10 +743,11 @@ class WMModel:
                         "tau_fac": self.network_params["stp_params"]["tau_F"],
                         "U": self.network_params["stp_params"]["U"],
                         "u": self.network_params["stp_params"]["u0"],
-                        "x": self.network_params["stp_params"]["x0"]}
+                        "x": self.network_params["stp_params"]["x0"],
+                        "receptor_type": 2}
             nest.Connect(self.exc_populations[-1], self.exc_populations[i], con_dict, syn_dict)
 
-            con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.network_params["syn_params"]["gamma_0"]*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
+            con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.network_params["syn_params"]["gamma_0"]*self.cEE*(1.0-self.f*self.p)*self.network_params["N_exc"]),
                         'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
             syn_dict = {"synapse_model": "tsodyks3_synapse",
                         "weight": get_weight(self.network_params["syn_params"]["J_p"], self.network_params["neur_params"]["tau"][0]),
@@ -604,52 +756,35 @@ class WMModel:
                         "tau_fac": self.network_params["stp_params"]["tau_F"],
                         "U": self.network_params["stp_params"]["U"],
                         "u": self.network_params["stp_params"]["u0"],
-                        "x": self.network_params["stp_params"]["x0"]}
+                        "x": self.network_params["stp_params"]["x0"],
+                        "receptor_type": 2}
             nest.Connect(self.exc_populations[-1], self.exc_populations[i], con_dict, syn_dict)
 
             # indegrees from the inh pop
-            if more_print:
-                print("\tSource: inh pop")
-            con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.c*self.network_params["N_inh"]),
-                        'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
             syn_dict = {"synapse_model": "static_synapse",
                         "weight": get_weight(-self.network_params["syn_params"]["J_EI"], self.network_params["neur_params"]["tau"][1]),
-                        "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1])}
-            nest.Connect(self.inh_population, self.exc_populations[i], con_dict, syn_dict)
-
-        # connections for the inhibitory population
-        if more_print:
-            print("\nTarget: inhibitory population")
-        # indegrees from the populations
-        for i in range(self.p):
-            if more_print:
-                print("\tSource: selective population ", i+1)
-            con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.f*self.c*self.network_params["N_exc"]),
-                        'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
-            syn_dict = {"synapse_model": "static_synapse",
-                        "weight": get_weight(self.network_params["syn_params"]["J_IE"], self.network_params["neur_params"]["tau"][1]),
-                        "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1])}    
-            nest.Connect(self.exc_populations[i], self.inh_population, con_dict, syn_dict)
-
-        # indegrees from the other exc neurons
-        if more_print:
-            print("\tSource: non-selective exc pop")
-        con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
-                    'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
-        syn_dict = {"synapse_model": "static_synapse",
-                    "weight": get_weight(self.network_params["syn_params"]["J_IE"], self.network_params["neur_params"]["tau"][0]),
-                    "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1])}  
-        nest.Connect(self.exc_populations[-1], self.inh_population, con_dict, syn_dict)
-
-        # indegrees from inh pop itself
-        if more_print:
-            print("\tSource: inh pop")
-        con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.c*self.network_params["N_inh"]),
-                    'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
-        syn_dict = {"synapse_model": "static_synapse",
-                    "weight": get_weight(-self.network_params["syn_params"]["J_II"], self.network_params["neur_params"]["tau"][1]),
-                    "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1])} 
-        nest.Connect(self.inh_population, self.inh_population, con_dict, syn_dict)
+                        "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                        "receptor_type": 3}
+            if(self.network_params["inhibition"]=="new"):
+                con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.cEI*self.network_params["N_inh"]*self.f),
+                            'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                for j in range(self.p):
+                    if more_print:
+                        print("\tSource: selective inh pop ", j)
+                    # removed connections I[i]-->E[i]
+                    if(i!=j):
+                        nest.Connect(self.inh_populations[j], self.exc_populations[i], con_dict, syn_dict)
+                if more_print:
+                    print("\tSource: non-selective inh pop ")
+                con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.cEI*self.network_params["N_inh"]*(1.0-self.f*self.p)),
+                            'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                nest.Connect(self.inh_populations[-1], self.exc_populations[i], con_dict, syn_dict)
+            else:
+                if more_print:
+                    print("\tSource: global inh pop")
+                con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.cEI*self.network_params["N_inh"]),
+                            'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                nest.Connect(self.inh_population, self.exc_populations[i], con_dict, syn_dict)
 
         # connection for the non-specific exc population
         if more_print:
@@ -658,7 +793,7 @@ class WMModel:
         for i in range(self.p):
             if more_print:
                 print("\tSource: selective population ", i+1)
-            con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.f*self.c*self.network_params["N_exc"]),
+            con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.f*self.cEE*self.network_params["N_exc"]),
                         'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
             syn_dict = {"synapse_model": "tsodyks3_synapse",
                         "weight": get_weight(self.network_params["syn_params"]["J_b"], self.network_params["neur_params"]["tau"][0]),
@@ -667,13 +802,14 @@ class WMModel:
                         "tau_fac": self.network_params["stp_params"]["tau_F"],
                         "U": self.network_params["stp_params"]["U"],
                         "u": self.network_params["stp_params"]["u0"],
-                        "x": self.network_params["stp_params"]["x0"]}
+                        "x": self.network_params["stp_params"]["x0"],
+                        "receptor_type": 2}
             nest.Connect(self.exc_populations[i], self.exc_populations[-1], con_dict, syn_dict)
 
         # indegrees from the rest of the exc pop
         if more_print:
             print("\tSource: non-selective exc pop")
-        con_dict = {'rule': 'fixed_indegree', 'indegree': int((1.0-self.network_params["syn_params"]["gamma_0"])*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
+        con_dict = {'rule': 'fixed_indegree', 'indegree': int((1.0-self.network_params["syn_params"]["gamma_0"])*self.cEE*(1.0-self.f*self.p)*self.network_params["N_exc"]),
                     'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
         syn_dict = {"synapse_model": "tsodyks3_synapse",
                     "weight": get_weight(self.network_params["syn_params"]["J_b"], self.network_params["neur_params"]["tau"][0]),
@@ -682,10 +818,11 @@ class WMModel:
                     "tau_fac": self.network_params["stp_params"]["tau_F"],
                     "U": self.network_params["stp_params"]["U"],
                     "u": self.network_params["stp_params"]["u0"],
-                    "x": self.network_params["stp_params"]["x0"]}
+                    "x": self.network_params["stp_params"]["x0"],
+                    "receptor_type": 2}
         nest.Connect(self.exc_populations[-1], self.exc_populations[-1], con_dict, syn_dict)
 
-        con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.network_params["syn_params"]["gamma_0"]*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
+        con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.network_params["syn_params"]["gamma_0"]*self.cEE*(1.0-self.f*self.p)*self.network_params["N_exc"]),
                     'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
         syn_dict = {"synapse_model": "tsodyks3_synapse",
                     "weight": get_weight(self.network_params["syn_params"]["J_p"], self.network_params["neur_params"]["tau"][0]),
@@ -694,18 +831,178 @@ class WMModel:
                     "tau_fac": self.network_params["stp_params"]["tau_F"],
                     "U": self.network_params["stp_params"]["U"],
                     "u": self.network_params["stp_params"]["u0"],
-                    "x": self.network_params["stp_params"]["x0"]}
+                    "x": self.network_params["stp_params"]["x0"],
+                    "receptor_type": 2}
         nest.Connect(self.exc_populations[-1], self.exc_populations[-1], con_dict, syn_dict)
 
+
         # indegrees from the inh pop
-        if more_print:
-            print("\tSource: inh pop")
-        con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.c*self.network_params["N_inh"]),
-                    'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
-        syn_dict = {"synapse_model": "static_synapse",
-                    "weight": get_weight(-self.network_params["syn_params"]["J_EI"], self.network_params["neur_params"]["tau"][1]),
-                    "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1])}
-        nest.Connect(self.inh_population, self.exc_populations[-1], con_dict, syn_dict)
+        if(self.network_params["inhibition"]=="classic"):
+            if more_print:
+                print("\tSource: global inh pop")
+            con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.cEI*self.network_params["N_inh"]),
+                        'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+            syn_dict = {"synapse_model": "static_synapse",
+                        "weight": get_weight(-self.network_params["syn_params"]["J_EI"], self.network_params["neur_params"]["tau"][1]),
+                        "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                        "receptor_type": 3}
+            nest.Connect(self.inh_population, self.exc_populations[-1], con_dict, syn_dict)
+        else:
+            for j in range(self.p):
+                if more_print:
+                    print("\tSource: selective inh pop ", j+1)
+                con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.cEI*self.network_params["N_inh"]*self.f),
+                            'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                syn_dict = {"synapse_model": "static_synapse",
+                            "weight": get_weight(-self.network_params["syn_params"]["J_EI"], self.network_params["neur_params"]["tau"][1]),
+                            "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                            "receptor_type": 3}
+                nest.Connect(self.inh_populations[j], self.exc_populations[-1], con_dict, syn_dict)
+            
+            if more_print:
+                    print("\tSource: non-selective inh pop ")
+            con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.cEI*self.network_params["N_inh"]*(1.0-self.f*self.p)),
+                        'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+            syn_dict = {"synapse_model": "static_synapse",
+                        "weight": get_weight(-self.network_params["syn_params"]["J_EI"], self.network_params["neur_params"]["tau"][1]),
+                        "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                        "receptor_type": 3}
+            nest.Connect(self.inh_populations[-1], self.exc_populations[-1], con_dict, syn_dict)
+
+        # connections for the inhibitory population
+        # indegrees from the populations
+        if(self.network_params["inhibition"]=="classic"):
+            if more_print:
+                print("\nTarget: global inhibitory population")
+            for i in range(self.p):
+                if more_print:
+                    print("\tSource: selective population ", i+1)
+                con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.f*self.cIE*self.network_params["N_exc"]),
+                            'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                syn_dict = {"synapse_model": "static_synapse",
+                            "weight": get_weight(self.network_params["syn_params"]["J_IE"], self.network_params["neur_params"]["tau"][1]),
+                            "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                            "receptor_type": 2}    
+                nest.Connect(self.exc_populations[i], self.inh_population, con_dict, syn_dict)
+
+            # indegrees from the other exc neurons
+            if more_print:
+                print("\tSource: non-selective exc pop")
+            con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.cIE*(1.0-self.f*self.p)*self.network_params["N_exc"]),
+                        'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+            syn_dict = {"synapse_model": "static_synapse",
+                        "weight": get_weight(self.network_params["syn_params"]["J_IE"], self.network_params["neur_params"]["tau"][0]),
+                        "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                        "receptor_type": 2}
+            nest.Connect(self.exc_populations[-1], self.inh_population, con_dict, syn_dict)
+
+            # indegrees from inh pop itself
+            if more_print:
+                print("\tSource: global inh pop")
+            con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.cII*self.network_params["N_inh"]),
+                        'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+            syn_dict = {"synapse_model": "static_synapse",
+                        "weight": get_weight(-self.network_params["syn_params"]["J_II"], self.network_params["neur_params"]["tau"][1]),
+                        "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                        "receptor_type": 3}
+            nest.Connect(self.inh_population, self.inh_population, con_dict, syn_dict)
+
+
+        
+        else:
+            # new inhibitory connectivity
+            for j in range(self.p):
+                if more_print:
+                        print("Target: selective inhibitory population ", j+1)
+                for i in range(self.p):
+                    # the condition removes the connections E[i]-->I[j], with j!=i
+                    if(i==j):
+                        if more_print:
+                            print("\tSource: selective population ", i+1)
+                        con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.f*self.cIE*self.network_params["N_exc"]*self.f),
+                                    'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                        syn_dict = {"synapse_model": "static_synapse",
+                                    "weight": get_weight(self.network_params["syn_params"]["J_IE"], self.network_params["neur_params"]["tau"][1]),
+                                    "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                                    "receptor_type": 2}    
+                        nest.Connect(self.exc_populations[i], self.inh_populations[j], con_dict, syn_dict)
+
+                # indegrees from the other exc neurons
+                if more_print:
+                    print("\tSource: non-selective exc pop")
+                con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.cIE*(1.0-self.f*self.p)*self.network_params["N_exc"]*self.f),
+                            'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                syn_dict = {"synapse_model": "static_synapse",
+                            "weight": get_weight(self.network_params["syn_params"]["J_IE"], self.network_params["neur_params"]["tau"][0]),
+                            "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                            "receptor_type": 2}
+                nest.Connect(self.exc_populations[-1], self.inh_population[j], con_dict, syn_dict)
+
+                # indegrees from inh pop itself
+                con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.cII*self.network_params["N_inh"]*self.f),
+                            'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                syn_dict = {"synapse_model": "static_synapse",
+                            "weight": get_weight(-self.network_params["syn_params"]["J_II"], self.network_params["neur_params"]["tau"][1]),
+                            "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                            "receptor_type": 3}
+                for k in range(self.p):
+                    if more_print:
+                        print("\tSource: selective inh pop ",k)
+                    nest.Connect(self.inh_populations[k], self.inh_populations[j], con_dict, syn_dict)
+                
+                if more_print:
+                    print("\tSource: non-selective inh pop")
+                con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.cII*self.network_params["N_inh"]*(1.0-self.f*self.p)),
+                            'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                syn_dict = {"synapse_model": "static_synapse",
+                            "weight": get_weight(-self.network_params["syn_params"]["J_II"], self.network_params["neur_params"]["tau"][1]),
+                            "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                            "receptor_type": 3}
+                nest.Connect(self.inh_populations[-1], self.inh_populations[j], con_dict, syn_dict)
+
+            if more_print:
+                print("Target: non-selective inhibitory population")
+            for i in range(self.p):
+                if more_print:
+                    print("\tSource: selective population ", i+1)
+                con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.f*self.cIE*self.network_params["N_exc"]),
+                            'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                syn_dict = {"synapse_model": "static_synapse",
+                            "weight": get_weight(self.network_params["syn_params"]["J_IE"], self.network_params["neur_params"]["tau"][1]),
+                            "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                            "receptor_type": 2}    
+                nest.Connect(self.exc_populations[i], self.inh_populations[-1], con_dict, syn_dict)
+            
+            if more_print:
+                print("\tSource: non-selective population")
+            con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.cIE*self.network_params["N_exc"]*(1.0 - self.f*self.p)),
+                        'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+            syn_dict = {"synapse_model": "static_synapse",
+                        "weight": get_weight(self.network_params["syn_params"]["J_IE"], self.network_params["neur_params"]["tau"][1]),
+                        "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                        "receptor_type": 2}    
+            nest.Connect(self.exc_populations[-1], self.inh_populations[-1], con_dict, syn_dict)
+
+            con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.cII*self.network_params["N_inh"]*self.f),
+                        'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+            syn_dict = {"synapse_model": "static_synapse",
+                        "weight": get_weight(-self.network_params["syn_params"]["J_II"], self.network_params["neur_params"]["tau"][1]),
+                        "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                        "receptor_type": 3}
+            for k in range(self.p):
+                if more_print:
+                    print("\tSource: selective inh pop ",k)
+                nest.Connect(self.inh_populations[k], self.inh_populations[-1], con_dict, syn_dict)
+            
+            if more_print:
+                print("\tSource: non-selective inh pop")
+            con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.cII*self.network_params["N_inh"]*(1.0-self.f*self.p)),
+                        'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+            syn_dict = {"synapse_model": "static_synapse",
+                        "weight": get_weight(-self.network_params["syn_params"]["J_II"], self.network_params["neur_params"]["tau"][1]),
+                        "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                        "receptor_type": 3}
+            nest.Connect(self.inh_populations[-1], self.inh_populations[-1], con_dict, syn_dict)
 
         print("Done")
     
@@ -719,21 +1016,39 @@ class WMModel:
         
         # background input connection
         nest.Connect(self.exc_bkg_input, self.exc_population, syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
+        nest.Connect(self.exc_ac_input, self.exc_population, syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
         nest.Connect(self.inh_bkg_input, self.inh_population, syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
         # connect offset to diminish bkg exc input
         nest.Connect(self.exc_offset, self.exc_population, syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
 
         # item loading connection
         #self.item_loading_signals
-        for i in range(self.network_params["item_loading"]["nstim"]):
-            nest.Connect(self.item_loading_signals[i], self.exc_populations[self.network_params["item_loading"]["pop_id"][i]],
-                         syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
+        if("item_loading" in self.network_params):  
+            for i in range(self.network_params["item_loading"]["nstim"]):
+                nest.Connect(self.item_loading_signals[i], self.exc_populations[self.network_params["item_loading"]["pop_id"][i]],
+                             syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
+
+        # ADD THE CONNECTION FOR THE SEQUENTIAL ITEM LOADING
+        if("seq_item_loading" in self.network_params):
+            for i in range(self.network_params["seq_item_loading"]["nstim"]):
+                for sq in range(self.network_params["seq_item_loading"]["nseq"]):
+                    Nmin = int(sq * self.f * self.network_params["N_exc"]/self.network_params["seq_item_loading"]["nseq"])
+                    Nmax = int((sq + 1) * self.f * self.network_params["N_exc"]/self.network_params["seq_item_loading"]["nseq"])
+                    if(self.network_params["seq_item_loading"]['element'][sq]):
+                        nest.Connect(self.seq_item_loading_signals[i][sq], self.exc_populations[self.network_params["seq_item_loading"]["pop_id"][i]][Nmin:Nmax],
+                                    syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
+
 
         # nonspecific readout signals connection
         if("nonspecific_readout_signals" in self.network_params):
-            for i in range(self.network_params["nonspecific_readout_signals"]["nstim"]):
-                nest.Connect(self.nonspecific_readout_signals[i], self.exc_population, 
-                            syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
+            if(self.network_params["nonspecific_readout_signals"]["specific"] == False):
+                for i in range(self.network_params["nonspecific_readout_signals"]["nstim"]):
+                    nest.Connect(self.nonspecific_readout_signals[i], self.exc_population, 
+                                syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
+            else:
+                for i in range(self.network_params["nonspecific_readout_signals"]["nstim"]):
+                    nest.Connect(self.nonspecific_readout_signals[i], self.exc_populations[self.network_params["nonspecific_readout_signals"]["popids"][i]], 
+                                syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
 
         # random nonspecific noise
         if("nonspecific_noise" in self.network_params):
@@ -744,8 +1059,12 @@ class WMModel:
         
         if("periodic_sequence" in self.network_params):
             for i in range(len(self.network_params["periodic_sequence"]["times"])):
-                nest.Connect(self.periodic_sequence[i], self.exc_population, 
-                             syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
+                if(self.network_params["periodic_sequence"]["selective_target"]):
+                    nest.Connect(self.periodic_sequence[i], self.exc_populations[self.network_params["periodic_sequence"]["popid"][i]], 
+                                 syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
+                else:
+                    nest.Connect(self.periodic_sequence[i], self.exc_population, 
+                                 syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
 
 
         print("Done")
@@ -758,11 +1077,35 @@ class WMModel:
         """
         print("Connecting recording devices...", end = ' ')
         #self.spike_recorders
-        for i in range(len(self.spike_recorders)):
-            pop_id = self.simulation_params["recording_params"]["pop_recorded"][i]
-            N_neurons_recorded = int(self.network_params["N_exc"]*self.f*self.simulation_params["recording_params"]["fraction_pop_recorded"])
-            #print(self.exc_populations[pop_id][0:N_neurons_recorded])
-            nest.Connect(self.exc_populations[pop_id][0:N_neurons_recorded], self.spike_recorders[i])
+        if(self.simulation_params["recording_params"]["pop_recorded"]=="all"):
+            # connect selective populations
+            for i in range(self.p):
+                N_neurons_recorded = int(self.network_params["N_exc"]*self.f*self.simulation_params["recording_params"]["fraction_pop_recorded"])
+                #print(self.exc_populations[i][0:N_neurons_recorded])
+                nest.Connect(self.exc_populations[i][0:N_neurons_recorded], self.spike_recorders[i])
+            # connect non selective population            
+            #N_neurons_recorded = int(self.network_params["N_exc"]*(1.0 - self.p*self.f)*self.simulation_params["recording_params"]["fraction_pop_recorded"])
+            nest.Connect(self.exc_populations[self.p][0:N_neurons_recorded], self.spike_recorders[self.p])
+            # connect inhibitory population
+            if(self.network_params["inhibition"]=="classic"):
+                N_neurons_recorded = int(self.network_params["N_inh"]*self.simulation_params["recording_params"]["fraction_pop_recorded"])
+            else:
+                N_neurons_recorded = self.network_params["N_inh"]
+            nest.Connect(self.inh_population[0:N_neurons_recorded], self.spike_recorders[self.p+1])
+        
+        else:
+            # if not "all", only selective populations are recorded
+            for i in range(len(self.spike_recorders)):
+                pop_id = self.simulation_params["recording_params"]["pop_recorded"][i]
+                N_neurons_recorded = int(self.network_params["N_exc"]*self.f*self.simulation_params["recording_params"]["fraction_pop_recorded"])
+                #print(self.exc_populations[pop_id][0:N_neurons_recorded])
+                nest.Connect(self.exc_populations[pop_id][0:N_neurons_recorded], self.spike_recorders[i])
+        
+        if(self.simulation_params["recording_params"]["record_membrane_potential"]):
+            for i in range(len(self.multimeters)):
+                pop_id = self.simulation_params["recording_params"]["pop_recorded"][i]
+                N_neurons_recorded = int(self.network_params["N_exc"]*self.f*self.simulation_params["recording_params"]["fraction_neurons_membrane_potential_redorded"])
+                nest.Connect(self.multimeters[i], self.exc_populations[pop_id][0:N_neurons_recorded])
 
         print("Done")
     
@@ -878,17 +1221,36 @@ class WMModel:
         fig, ax = plt.subplots()
         plt.title("Raster plot", fontsize=title)
         colors = ["blue", "red", "green", "orange", "olive"]
-        for i in range(len(self.spike_recorders)):
-            sr = self.spike_recorders[i].get("events")
-            ax.plot(sr["times"], sr["senders"], '.', color = colors[i%len(colors)], label="Selective population {}".format(self.simulation_params["recording_params"]["pop_recorded"][i]))
+        if(self.simulation_params["recording_params"]["pop_recorded"]=="all"):
+            colors.append("cornflowerblue")
+            colors.append("black")
+            for i in range(self.p):
+                sr = self.spike_recorders[i].get("events")
+                ax.plot(sr["times"], sr["senders"], '.', color = colors[i%len(colors)], label="Selective population {}".format(i))
+            sr = self.spike_recorders[self.p].get("events")
+            ax.plot(sr["times"], sr["senders"], '.', color = colors[-2], label="Non-selective population")
+            sr = self.spike_recorders[self.p+1].get("events")
+            ax.plot(sr["times"], sr["senders"]-[self.network_params["N_exc"]*(1.0 - (self.p+1)*self.f) for i in sr["senders"]], '.', color = colors[-1], label="Inhibitory population")
+
+        else:
+            for i in range(len(self.spike_recorders)):
+                sr = self.spike_recorders[i].get("events")
+                ax.plot(sr["times"], sr["senders"], '.', color = colors[i%len(colors)], label="Selective population {}".format(self.simulation_params["recording_params"]["pop_recorded"][i]))
         ax.set_ylabel("# cell", fontsize=axfont)
         ax.set_xlabel("Time [ms]", fontsize=axfont)
         ax.tick_params(labelsize=axfont)
-        for i in range(self.network_params["item_loading"]["nstim"]):
-            if(i==0):
-                ax.axvspan(self.network_params["item_loading"]["origin"][i], self.network_params["item_loading"]["origin"][i]+self.network_params["stimulation_params"]["T_cue"], alpha=0.5, color='grey', label="Item Loading")
-            else:
-                ax.axvspan(self.network_params["item_loading"]["origin"][i], self.network_params["item_loading"]["origin"][i]+self.network_params["stimulation_params"]["T_cue"], alpha=0.5, color='grey')
+        if("item_loading" in self.network_params):
+            for i in range(self.network_params["item_loading"]["nstim"]):
+                if(i==0):
+                    ax.axvspan(self.network_params["item_loading"]["origin"][i], self.network_params["item_loading"]["origin"][i]+self.network_params["stimulation_params"]["T_cue"], alpha=0.5, color='grey', label="Item Loading")
+                else:
+                    ax.axvspan(self.network_params["item_loading"]["origin"][i], self.network_params["item_loading"]["origin"][i]+self.network_params["stimulation_params"]["T_cue"], alpha=0.5, color='grey')
+        if("seq_item_loading" in self.network_params):
+            for i in range(self.network_params["seq_item_loading"]["nstim"]):
+                if(i==0):
+                    ax.axvspan(self.network_params["seq_item_loading"]["origin"][i], self.network_params["seq_item_loading"]["origin"][i]+self.network_params["stimulation_params"]["T_cue"], alpha=0.5, color='grey', label="Item Loading")
+                else:
+                    ax.axvspan(self.network_params["seq_item_loading"]["origin"][i], self.network_params["seq_item_loading"]["origin"][i]+self.network_params["stimulation_params"]["T_cue"], alpha=0.5, color='grey')
         if("nonspecific_readout_signals" in self.network_params):
             for i in range(self.network_params["nonspecific_readout_signals"]["nstim"]):
                 if(i==0):

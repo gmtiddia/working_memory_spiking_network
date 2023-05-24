@@ -13,30 +13,44 @@ default_network_params = {
     "f": 0.10,
     # possibility of overlap between populations
     "overlap": False,
+    # inhibition: can be "classic" or "new"
+    "inhibition": "classic",
     # number of memories
     "p": 5,
-    # probability of synaptic contact
-    "c": 0.20,
+    # probability of synaptic contact for E->E connections
+    "cEE": 0.20,
+    # probability of synaptic contact for neurons belonging to the same selective population
+    "cEEsp": 0.20,
+    # probability of synaptic contact for E->I connections
+    "cIE": 0.20,
+    # probability of synaptic contact for I->E connections
+    "cEI": 0.20,
+    # probability of synaptic contact for I->I connections
+    "cII": 0.20,
     # number of exc cells 
     "N_exc": 8000,
     # number of inh cells 
     "N_inh": 2000,
-    #mean external current [mV for exc population]
+    # frequency of the external current
+    "fr_eta": 15.0,
+    # amplitude of the external current (A_eta*eta_exc)
+    "A_eta": 1.05,
+    # mean external current [mV for exc population]
     # case A: single stable activity
-    "mu_excA": 22.70,
+    "eta_excA": 22.70,
     # case B: bistable regime synchronous
-    "mu_excB": 23.70,
+    "eta_excB": 23.70,
     # case C: bistable regime asynchronous
-    "mu_excC": 24.05,
+    "eta_excC": 24.10,
     # mean external current used in the simulation [mV for exc population]
-    "mu_exc": 23.70,
+    "eta_exc": 23.70,
     # mean external current used in the simulation [mV for inh population]
-    "mu_inh": 20.5,
+    "eta_inh": 20.5,
     # current offset to return at stable state
-    "mu_exc_end": 23.7 - 22.7,
-    # std of external current
-    "sigma_exc": 1.0,
-    "sigma_inh": 1.0}
+    "eta_exc_end": 23.70 - 22.70,
+    # std of external current [mV]
+    "Sigma_exc": 1.0,
+    "Sigma_inh": 1.0}
 
 """
 Single-cell parameters
@@ -46,13 +60,15 @@ default_neur_params = {
     # spike emission threshold [mV]
     "V_th": [20.0, 20.0],
     # reset potential [mV]
-    "V_reset": [16.0, 13.0], 
+    "V_reset": [0.0, 0.0],#[16.0, 13.0], 
     # membrane time constant [ms]
     "tau": [15.0, 10.0],
     # absolute refractory period [ms]
     "t_ref": [2.0, 2.0],
     # resting potential [mV]
     "E_L": [0.0, 0.0],
+    # synaptic time constants for excitatory synapses (intra EE, inter EE, inh connections)
+    "tau_syn" : (2.0, 2.0, 2.0),
     # membrane potential at the beginning of the simulation [mV]
     "V_m": [0.0, 0.0]}
 
@@ -136,7 +152,7 @@ Simulation parameters
 
 default_simulation_params = {
     # master seed for random number generators
-    "master_seed" : 123456,
+    "master_seed" : 143202461,
     # number of threads
     "threads" : 8,
     # simulation step (in ms)
@@ -144,15 +160,24 @@ default_simulation_params = {
     # simulated time (in ms)
     "t_sim" : 6000.0,
     # offset origin [ms]
-    "mu_end_origin": 5200.0,
+    "eta_end_origin": 5200.0,
     "recording_params" : {
         # fraction of neurons recorded for each population
         "fraction_pop_recorded" : 0.1,
-        # selective excitatory population recorded (0, ..., p-1)
-        "pop_recorded" : [0, 1],
+        # selective excitatory population recorded "all", or a list to record selective pops [0, 1, ...]
+        "pop_recorded" : "all",
         "spike_recording_params": {"start": 50.0},
         # save spike times
+        # if pop_recorded = "all", non selective population and inhibitory population would be the
+        # last two .dat files (e.g. spikedata5.dat & spikedata6.dat)
         "save_to_file" : True,
+        # record membrane potential
+        # it will be frecorded from a fraction of
+        # neurons from each selective population
+        "record_membrane_potential" : False,
+        # fraction of neurons recorded
+        "fraction_neurons_membrane_potential_redorded": 0.01,
+        # fraction of 
         # save short-term plasticity (STP) data
         "stp_recording" : False,
         # intervak for STP recording

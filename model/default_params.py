@@ -22,15 +22,15 @@ default_network_params = {
     # number of inh cells 
     "N_inh": 2000,
     #mean external current [mV for exc population]
-    # case A: single stable activity
+    # needed to reproduce case A: single stable activity
     "eta_excA": 22.70,
-    # case B: bistable regime synchronous
+    # needed to reproduce case B: bistable regime synchronous
     "eta_excB": 23.70,
-    # case C: bistable regime asynchronous
+    # needed to reproduce case C: bistable regime asynchronous
     "eta_excC": 24.10,
-    # mean external current used in the simulation [mV for exc population]
+    # mean external current actually used in the simulation [mV for exc population]
     "eta_exc": 23.70,
-    # mean external current used in the simulation [mV for inh population]
+    # mean external current actually used in the simulation [mV for inh population]
     "eta_inh": 20.5,
     # current offset to return at stable state
     "eta_exc_end": 23.70 - 22.70,
@@ -43,6 +43,7 @@ Single-cell parameters
 """
 
 default_neur_params = {
+    # default neuron parameters for [EXC, INH] neurons
     # spike emission threshold [mV]
     "V_th": [20.0, 20.0],
     # reset potential [mV]
@@ -73,11 +74,11 @@ default_syn_params = {
     "J_b": 0.10,
     # potentiated level of E->E synapses [mV]
     "J_p": 0.45,
-    # fraction of potentiated synapses before learning
+    # fraction of potentiated synapses randomly distributed across the connections with the non-selective population
     "gamma_0": 0.10,
-    # synaptic delays [ms, from min to max]
+    # synaptic delays [ms, from min to max, uniformly distributed]
     "delay": [0.1, 1.0],
-    # external current delays [ms, from min to max]
+    # external current delays [ms, from min to max, uniformly distributed]
     "delay_ext": [0.1, 1.0],
     # possibility of doing self-connections
     "autapses" : True,
@@ -92,9 +93,9 @@ STP parameters
 default_stp_params = {
     # baseline utilization factor
     "U": 0.19,
-    # u value at the beginning
+    # u value at the beginning of the simulation
     "u0" : 0.19,
-    # x value at the beginning
+    # x value at the beginning of the simulation
     "x0" : 1.0,
     # recovery time of utilization factor [ms]
     "tau_F": 1500.0,

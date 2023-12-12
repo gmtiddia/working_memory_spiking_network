@@ -30,6 +30,20 @@ Additionally, to run the model and analyze the data, Python and additional packa
 
 - [analysis.py](analysis.py) reproduces the plots shown in the publication. To reproduce the data edit line [509](analysis.py#L509) of the script with the path in which the data is stored and edit lines [536](analysis.py#L536) and [538](analysis.py#L538) to specify which figure (2 and 3) and panel (A, B, or C) you want to reproduce from the publication.
 
+## Advanced simulations
+
+By typing
+```
+python3 run_model.py --help
+```
+
+you can see that two arguments can be set when running the simulation:
+- path, which indicates the name of the directory in which data will be stored
+- seed, i.e., the seed for random number generation
+
+These settings are useful in case multiple simulations using different seeds have to be done.
+
+A simple use case is shown in [run_simset.sh](run_simset.sh), which performs a set of 10 simulations changing the seed for random number generation and the path.
 
 
 # Contact

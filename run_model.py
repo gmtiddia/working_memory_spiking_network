@@ -1,6 +1,19 @@
 from model.model import WMModel
 import matplotlib.pyplot as plt
 import os
+from argparse import ArgumentParser
+
+# Get and check path and rng seed
+parser = ArgumentParser()
+parser.add_argument("--path", type=str, default=None, help='Path for the simulation output (default: data).')
+parser.add_argument("--seed", type=int, default=143202461, help='Seed for random number generation (default: 143202461).')
+args = parser.parse_args()
+
+if args.path is None:
+    data_path = os.path.join(os.getcwd(), 'data/')
+else:
+    data_path = os.path.join(os.getcwd(), args.path+"/")
+
 
 # Script needed to run the model.
 # Please choose the values of average external currents and the starting value of u
@@ -34,7 +47,9 @@ tsim = 3000.0
 # here add the parameters to be edited. The rest of the parameters are in default_params.py
 simulation_p = {
     # path to data
-    "data_path" : os.path.join(os.getcwd(), 'data/'),
+    "data_path" : data_path,
+    # master seed
+    "master_seed" : args.seed,
     # number of OpenMP threads
     "threads" : 8,
     # overall simulation time
@@ -102,4 +117,4 @@ network.simulate_network()
 network.save_spike_data()
 # plots a raster plot of all the neurons recorded
 network.raster_plot()
-plt.show()
+#plt.show()

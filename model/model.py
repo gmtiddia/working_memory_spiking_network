@@ -802,6 +802,10 @@ class WMModel:
         # synaptic params recording BEFORE the simulation starts
         # the STP variables will be computed basing on the spiketimes recorded
         if(self.simulation_params["recording_params"]["stp_recording"]==True):
+            # we have to simulate the time in which no spikes are recorded first
+            # otherwise, we cannot compute the real STP values using the spiketimes
+            nest.Simulate(self.simulation_params["recording_params"]["spike_recording_params"]["start"])
+            # now we can record
             dum_start = time.time()
             print("\nExtracting STP params...", end = ' ')
             # fraction of neurons for each population to record STP variables from,,
@@ -827,13 +831,19 @@ class WMModel:
             print("Done")
             t_rec =  time.time() - dum_start
 
-        print("Starting the simulation...")
-        dum_start = time.time()
-        nest.Simulate(self.simulation_params["t_sim"])
-        t_sim = time.time() - dum_start
-        print("\nRecording of STP params in {} s.".format(t_rec))
-        print("Network simulated in {} s.".format(t_sim))
-        print("Overall simulation took {} s.".format(t_sim+t_rec))
+            print("Starting the simulation...")
+            dum_start = time.time()
+            nest.Simulate(self.simulation_params["t_sim"]-self.simulation_params["recording_params"]["spike_recording_params"]["start"])
+            t_sim = time.time() - dum_start
+            print("\nRecording of STP params in {} s.".format(t_rec))
+            print("Network simulated in {} s.".format(t_sim))
+            print("Overall simulation took {} s.".format(t_sim+t_rec))
+        else:
+            print("Starting the simulation...")
+            dum_start = time.time()
+            nest.Simulate(self.simulation_params["t_sim"])
+            t_sim = time.time() - dum_start
+            print("Network simulated in {} s.".format(t_sim))
 
 
     def raster_plot(self):

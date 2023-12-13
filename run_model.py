@@ -65,9 +65,7 @@ simulation_p = {
         # save spike data to file
         "save_to_file" : True,
         # save STP data to file
-        "stp_recording" : False,
-        # recording step for STP recording [ms]
-        "stp_record_interval" : 10.0,
+        "stp_recording" : True,
         # selective population for which the STP params (i.e. x, u) will be recorded
         "stp_pop_recorded" : [0, 1],
         # fraction of the selective population to be recorded for stp data

@@ -156,8 +156,6 @@ default_simulation_params = {
         "save_to_file" : True,
         # save short-term plasticity (STP) data
         "stp_recording" : False,
-        # intervak for STP recording
-        "stp_record_interval" : 10.0,
         # populations for which the STP params have to be recorded
         "stp_pop_recorded" : [0],
         # fraction of neurons of a population for which STP params have to be recorded

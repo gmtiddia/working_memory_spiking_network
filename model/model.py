@@ -794,79 +794,47 @@ class WMModel:
     def simulate_network(self):
         """
         Network simulation. If STP params are not recorded the network is simply simulated.
-        Otherwise the simulation proceeds in steps in order to record STP params.
+        Otherwise, before the simulation, STP parameters are recorded.
 
         """
         print("\n### NETWORK SIMULATION ###")
 
-        if(self.simulation_params["recording_params"]["stp_recording"]==False):
-            t0 = time.time()
-            nest.Simulate(self.simulation_params["t_sim"])
-            t1 = time.time()
-            print("Network simulated in {} s.".format(t1-t0))
-        else:
-            nest.SetKernelStatus({"print_time" : False})
-            t0 = 0.0
-            t_rec = 0.0
-            record_interval = self.simulation_params["recording_params"]["stp_record_interval"]
-            self.sim_steps = np.arange(record_interval, self.simulation_params["t_sim"]+record_interval, record_interval)
-            for s in range(len(self.sim_steps)):
-                print("\nStep {}/{} ({} s / {} s)".format(s+1, len(self.sim_steps), self.sim_steps[s], self.sim_steps[-1]))
-                dum_start = time.time()
-                nest.Simulate(record_interval)
-                t0 += time.time() - dum_start
-                dum_start = time.time()
-                self.record_std_params(dt = self.sim_steps[s])
-                t_rec +=  time.time() - dum_start
+        # synaptic params recording BEFORE the simulation starts
+        # the STP variables will be computed basing on the spiketimes recorded
+        if(self.simulation_params["recording_params"]["stp_recording"]==True):
             dum_start = time.time()
-            self.merge_std_data()
-            t_rec +=  time.time() - dum_start
-            print("\nRecording of STP params in {} s.".format(t_rec))
-            print("Network simulated in {} s.".format(t0))
-            print("Overall simulation took {} s.".format(t0+t_rec))
+            print("\nExtracting STP params...", end = ' ')
+            # fraction of neurons for each population to record STP variables from,,
+            dum = int(self.network_params["N_exc"]*self.f*self.simulation_params["recording_params"]["stp_fraction_recorded"])
+            # loop on the populations from which we have to record the STP variables from
+            source = []; target = []; x = []; u = []; weight = []; tau_D = []; tau_F = []
+            for npop in self.simulation_params["recording_params"]["stp_pop_recorded"]:
+                neuronpop = self.exc_populations[npop][0:dum]
+                conn = nest.GetConnections(synapse_model="tsodyks3_synapse", source=neuronpop)
+                source = conn.get("source")
+                target = conn.get("target")
+                weight = conn.get("weight")
+                x = conn.get("x")
+                u = conn.get("u")
+                tau_F = conn.get("tau_fac")
+                tau_D = conn.get("tau_rec")
+                dataset = {"source": source, "target": target, "weight": weight, "x": x, "u": u, "tau_F": tau_F, "tau_D": tau_D}
+                data = pd.DataFrame(dataset)
+                data.to_csv(self.simulation_params['data_path'] +"stp_params/"+ "stp_pop_"+str(npop)+".csv", index=False)
+            # naive way to free a bit of memory
+            source = []; target = []; x = []; u = []; weight = []; tau_D = []; tau_F = []
+            dataset = {}
+            print("Done")
+            t_rec =  time.time() - dum_start
 
+        print("Starting the simulation...")
+        dum_start = time.time()
+        nest.Simulate(self.simulation_params["t_sim"])
+        t_sim = time.time() - dum_start
+        print("\nRecording of STP params in {} s.".format(t_rec))
+        print("Network simulated in {} s.".format(t_sim))
+        print("Overall simulation took {} s.".format(t_sim+t_rec))
 
-    def record_std_params(self, dt = 0.0):
-        """
-        Recording function for the STP params. It is possible to record a fraction of the neuron population.
-        Only a synapse per neuron is recorded since the STP parameters are the same for all the synapses of the neuron.
-
-        Returns a csv file for every simulation step in the folder 'data_path/stp_params'
-        """
-        print("\nExtracting stp params...", end = ' ')
-        start = time.time()
-        dum = int(self.network_params["N_exc"]*self.f*self.simulation_params["recording_params"]["stp_fraction_recorded"])
-        for npop in self.simulation_params["recording_params"]["stp_pop_recorded"]:
-            neuronpop = self.exc_populations[npop][0:dum]
-            x = []; u = []; target = []; source = []; t = []; t_lastspike =[]
-            for i in range(dum):
-                conn = nest.GetConnections(synapse_model="tsodyks3_synapse", source=neuronpop[i])[0]
-                x.append(conn.get("x"))
-                u.append(conn.get("u"))
-                target.append(conn.get("target"))
-                source.append(conn.get("source"))
-                t.append(dt)
-                t_lastspike.append(nest.GetStatus(neuronpop[i], "t_spike")[0])
-            dataset = {"time": t, "source": source, "target": target, "x": x, "u": u, "t_last_spike": t_lastspike}
-            data = pd.DataFrame(dataset)
-            data.to_csv(self.simulation_params['data_path'] +"stp_params/"+ "stp_pop_"+str(npop)+"_"+str(int(dt))+".csv", index=False)
-        
-        stop = time.time()
-        print("Done in {} s: ".format(stop-start))
-    
-
-    def merge_std_data(self):
-        """
-        Merges the STD csv files that are produced for every step into a single csv file per selective population recorded.
-        Finally removes the old csv data.
-
-        """
-        for npop in self.simulation_params["recording_params"]["stp_pop_recorded"]:
-            csvlist = [self.simulation_params['data_path'] +"stp_params/"+ "stp_pop_"+str(npop)+"_"+str(int(self.sim_steps[s]))+".csv" for s in range(len(self.sim_steps))]
-            df = pd.concat(map(pd.read_csv, csvlist), ignore_index=True)
-            df.to_csv(self.simulation_params['data_path'] +"stp_params/"+"stp_params_tot_"+str(npop)+".csv")
-            [os.remove(oldcsv) for oldcsv in csvlist]
-            
 
     def raster_plot(self):
         """

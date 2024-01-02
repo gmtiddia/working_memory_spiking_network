@@ -9,7 +9,7 @@ If you use the code, cite us using the citation above.
 # Requirements
 To run the model, the NEST version of [this repository](https://github.com/gmtiddia/nest-simulator-3.1) is required. It is derived from the [NEST 3.1 version](https://github.com/nest/nest-simulator/tree/3.1-develop), with the addition of the ``tsodyks3_synapse`` model, not present in the standard version of the library. For the installation instructions, follow [this guide](https://nest-simulator.readthedocs.io/en/v3.1/installation/linux_install.html).
 
-Additionally, to run the model and analyze the data, Python and additional packages are required. To produce the data of the aforementioned publication, the following software was used:
+Additionally, to run the model and analyze the data, Python and additional packages are required. To produce the data for the aforementioned publication, the following software was used:
 - Python 3.9.7
 - Pandas 1.3.3
 - Numpy 1.22.4

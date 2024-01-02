@@ -576,7 +576,7 @@ def get_stp_data_evol(sr, popid, dt, subset_targets=True, targets=100):
             unew : list of floats
                 List of values of u evolved for all the simulation obtained for all the neurons recorded and all its connections
     """
-    neurons_recorded = 2 #int(network_params["N_exc"]*network_params["f"]*simulation_params["recording_params"]["stp_fraction_recorded"])
+    neurons_recorded = int(network_params["N_exc"]*network_params["f"]*simulation_params["recording_params"]["stp_fraction_recorded"])
     # time array, starts at the time at which the spike recording starts
     t = np.arange(simulation_params["recording_params"]["spike_recording_params"]["start"], simulation_params["t_sim"], dt)
     # arrays for stp data

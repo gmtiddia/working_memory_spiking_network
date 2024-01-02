@@ -555,7 +555,7 @@ def get_neuron_spiketimes(sr, nid):
     return(list(spike_times))
     
 
-def get_stp_data_evol(sr, popid, dt, subset_targets=True, targets=100):
+def get_stp_data_evol(sr, popid, dt, subset_targets=True, targets=10):
     """
         Get STP variables correctly evolved for all the simulation for each neuron connection.
 
@@ -592,7 +592,6 @@ def get_stp_data_evol(sr, popid, dt, subset_targets=True, targets=100):
     for n in nids:
         st = [simulation_params["recording_params"]["spike_recording_params"]["start"]] + get_neuron_spiketimes(sr, n)
         st.append(simulation_params["t_sim"]-1.0)
-        print(st)
         # list (a value for each target neuron)
         x0 = df[df["source"]==n]["x"].tolist()
         u0 = df[df["source"]==n]["u"].tolist()

@@ -75,16 +75,16 @@ def raster_plot():
     plt.draw()
 
 
-def firing_rate(t_start, t_stop):
+def firing_rate(t_start, t_stop, sr):
     
-    SE = sr0
+    SE = sr
     dum = SE[:,1]
     dum = (dum > t_start) & (dum < t_stop )
     print("Start firing rate calculation at {} ms and stop at {} ms".format(t_start, t_stop))
     # neuron that emitted the spikes in that range
     senders = [i for (i, dum) in zip(SE[:,0], dum) if dum]
     N_neurons_recorded = int(network_params["N_exc"]*network_params["f"]*simulation_params["recording_params"]["fraction_pop_recorded"])
-    ids = np.arange(np.min(senders),np.min(senders)+N_neurons_recorded)
+    ids = np.arange(np.min(senders), np.min(senders)+N_neurons_recorded)
     #print(len(ids))
     # count firing rate for each neuron
     occ = [[x,1000.0*senders.count(x)/(t_stop-t_start)] for x in ids]
@@ -136,70 +136,121 @@ def get_firing_rate_plot():
     #fr_diff = fr_difference(sr1, item_origin + stim_params["T_cue"], 3000.0, 20, item_origin,  True)
 
 
-def figure2(stp = False, t=[], x=[], u=[], panel="A"):
+def figure2(stp = False, t=[], x=[], u=[], xstd=[], ustd=[], panel="A"):
+
     labelsize=19
     titlesize=20
-    f, (ax0, ax1) = plt.subplots(1, 2, figsize=(15,4.2), gridspec_kw={'wspace': 0.4,'width_ratios': [2.5, 1]})
 
-    for i in range(network_params["item_loading"]["nstim"]):
-        if(i==0):
-            ax0.axvspan(network_params["item_loading"]["origin"][i], network_params["item_loading"]["origin"][i]+network_params["stimulation_params"]["T_cue"], alpha=0.5, color='grey', label="Item Loading")
-        else:
-            ax1.axvspan(network_params["item_loading"]["origin"][i], network_params["item_loading"]["origin"][i]+network_params["stimulation_params"]["T_cue"], alpha=0.5, color='grey')
+
+    #f, axs = plt.subplots(ncols=2, nrows=2, figsize=(15,8), gridspec_kw={'wspace': 0.4,'width_ratios': [3, 1]})
+
+    f, axs = plt.subplot_mosaic([['upper_left', 'right'], ['lower_left', 'right']], figsize=(18,8), gridspec_kw={'wspace': 0.3,'width_ratios': [3, 1]})
+
+    fr0 = sr0[:,1]
+    fr1 = sr1[:,1]
+    fr2 = sr2[:,1]
+    fr3 = sr3[:,1]
+    fr4 = sr4[:,1]
+    binwidth = 25.0 #ms
+    frmax0 = np.max(np.abs(fr0))
+    lim = (int(frmax0/binwidth) + 1) * binwidth
+    bins = np.arange(0, lim + binwidth, binwidth)
+    
+    axs['upper_left'].set_ylabel("rate [Hz]", color="k", fontsize=labelsize)
+    axs['upper_left'].tick_params(axis="x", labelbottom=False)
+    axs['upper_left'].tick_params(labelsize=labelsize, axis ='y')
+    h0 = np.histogram(fr0, bins=bins)[0:2]
+    fr0 = (h0[0]/(binwidth/1000.0))/(network_params["N_exc"]*network_params["f"])
+    axs['upper_left'].plot([(h0[1][i]+h0[1][i+1])/2.0 for i in range(len(h0[0]))], fr0, color = "limegreen", alpha=0.5)  
+    h1 = np.histogram(fr1, bins=bins)[0:2]
+    fr1 = h1[0]/(binwidth/1000.0)/(network_params["N_exc"]*network_params["f"])
+    axs['upper_left'].plot([(h1[1][i]+h1[1][i+1])/2.0 for i in range(len(h1[0]))], fr1, color = "black", alpha=0.5)
+    h2 = np.histogram(fr2, bins=bins)[0:2]
+    fr2 = h2[0]/(binwidth/1000.0)/(network_params["N_exc"]*network_params["f"])
+    axs['upper_left'].plot([(h2[1][i]+h2[1][i+1])/2.0 for i in range(len(h2[0]))], fr2, color = "blue", alpha=0.5)
+    h3 = np.histogram(fr3, bins=bins)[0:2]
+    fr3 = h3[0]/(binwidth/1000.0)/(network_params["N_exc"]*network_params["f"])
+    axs['upper_left'].plot([(h3[1][i]+h3[1][i+1])/2.0 for i in range(len(h3[0]))], fr3, color = "red", alpha=0.5)
+    h4 = np.histogram(fr4, bins=bins)[0:2]
+    fr4 = h4[0]/(binwidth/1000.0)/(network_params["N_exc"]*network_params["f"])
+    axs['upper_left'].plot([(h4[1][i]+h4[1][i+1])/2.0 for i in range(len(h4[0]))], fr4, color = "orange", alpha=0.5)
+
+
+    # usual plot of fig 2
+
+    if("item_loading" in network_params):
+        for i in range(network_params["item_loading"]["nstim"]):
+            if(i==0):
+                axs['lower_left'].axvspan(network_params["item_loading"]["origin"][i], network_params["item_loading"]["origin"][i]+network_params["stimulation_params"]["T_cue"], alpha=0.5, color='grey', label="Item Loading")
+            else:
+                axs['lower_left'].axvspan(network_params["item_loading"]["origin"][i], network_params["item_loading"]["origin"][i]+network_params["stimulation_params"]["T_cue"], alpha=0.5, color='grey')
+    if("seq_item_loading" in network_params):
+            for i in range(network_params["seq_item_loading"]["nstim"]):
+                if(i==0):
+                    axs['lower_left'].axvspan(network_params["seq_item_loading"]["origin"][i], network_params["seq_item_loading"]["origin"][i]+network_params["stimulation_params"]["T_cue"], alpha=0.5, color='grey', label="Item Loading")
+                else:
+                    axs['lower_left'].axvspan(network_params["seq_item_loading"]["origin"][i], network_params["seq_item_loading"]["origin"][i]+network_params["stimulation_params"]["T_cue"], alpha=0.5, color='grey')
     if("nonspecific_readout_signals" in network_params):
         for i in range(network_params["nonspecific_readout_signals"]["nstim"]):
             if(i==0):
-                ax0.axvspan(network_params["nonspecific_readout_signals"]["origin"][i], network_params["nonspecific_readout_signals"]["origin"][i]+network_params["stimulation_params"]["T_reac"], alpha=0.5, color='lightgrey', label="Readout signal")
+                axs['lower_left'].axvspan(network_params["nonspecific_readout_signals"]["origin"][i], network_params["nonspecific_readout_signals"]["origin"][i]+network_params["stimulation_params"]["T_reac"], alpha=0.5, color='lightgrey', label="Readout signal")
             else:
-                ax0.axvspan(network_params["nonspecific_readout_signals"]["origin"][i], network_params["nonspecific_readout_signals"]["origin"][i]+network_params["stimulation_params"]["T_reac"], alpha=0.5, color='lightgrey')
+                axs['lower_left'].axvspan(network_params["nonspecific_readout_signals"]["origin"][i], network_params["nonspecific_readout_signals"]["origin"][i]+network_params["stimulation_params"]["T_reac"], alpha=0.5, color='lightgrey')
     if("nonspecific_noise" in network_params):
         for i in range(network_params["nonspecific_noise"]["nstim"]):
             if(i==0):
-                ax0.axvspan(network_params["nonspecific_noise"]["origin"][i], network_params["nonspecific_noise"]["origin"][i]+network_params["stimulation_params"]["T_cue"], alpha=0.5, color='turquoise', label="Noise")
+                axs['lower_left'].axvspan(network_params["nonspecific_noise"]["origin"][i], network_params["nonspecific_noise"]["origin"][i]+network_params["stimulation_params"]["T_cue"], alpha=0.5, color='turquoise', label="Noise")
             else:
-                ax0.axvspan(network_params["nonspecific_noise"]["origin"][i], network_params["nonspecific_noise"]["origin"][i]+network_params["stimulation_params"]["T_cue"], alpha=0.5, color='turquoise')
+                axs['lower_left'].axvspan(network_params["nonspecific_noise"]["origin"][i], network_params["nonspecific_noise"]["origin"][i]+network_params["stimulation_params"]["T_cue"], alpha=0.5, color='turquoise')
     if("periodic_sequence" in network_params):
             for i in range(len(network_params["periodic_sequence"]["times"])):
                 if(i==0):
-                    ax0.axvspan(network_params["periodic_sequence"]["times"][i], network_params["periodic_sequence"]["times"][i]+network_params["stimulation_params"]["T_period_reac"], alpha=0.5, color='lightgrey', label="Periodic stimuli")
+                    axs['lower_left'].axvspan(network_params["periodic_sequence"]["times"][i], network_params["periodic_sequence"]["times"][i]+network_params["stimulation_params"]["T_period_reac"], alpha=0.5, color='lightgrey', label="Periodic stimuli")
                 else:
-                    ax0.axvspan(network_params["periodic_sequence"]["times"][i], network_params["periodic_sequence"]["times"][i]+network_params["stimulation_params"]["T_period_reac"], alpha=0.5, color='lightgrey')
+                    axs['lower_left'].axvspan(network_params["periodic_sequence"]["times"][i], network_params["periodic_sequence"]["times"][i]+network_params["stimulation_params"]["T_period_reac"], alpha=0.5, color='lightgrey')
     
     #plt.title("Raster plot for a subset of Pop {} and Pop {} neurons".format(simulation_params["recording_params"]["pop_recorded"][0], simulation_params["recording_params"]["pop_recorded"][1]), fontsize=titlesize)
-    ax0.plot(sr0[:,1], sr0[:,0], '.', color = "limegreen", label="Sel Pop {}".format(simulation_params["recording_params"]["pop_recorded"][0]))
-    ax0.plot(sr1[:,1], sr1[:,0]-[800 for i in sr1[:,0]], '.', color = "k", label="Sel Pop {}".format(simulation_params["recording_params"]["pop_recorded"][1]))
-    ax0.set_ylabel("# cell", color="k", fontsize=labelsize)
-    ax0.set_xlabel("Time [ms]", fontsize=labelsize)
-    ax0.tick_params(labelsize=labelsize, pad=10, axis ='x')
-    ax0.tick_params(labelsize=labelsize, axis ='y')
-    ax0.set_yticks([0,80])
-    ax0.set_ylim(0.0, 80.0)
+    axs['lower_left'].plot(sr0[:,1], sr0[:,0], '.', color = "limegreen", label="Sel Pop {}".format(simulation_params["recording_params"]["pop_recorded"][0]))
+    axs['lower_left'].plot(sr1[:,1], sr1[:,0]-[network_params["N_exc"]*network_params["f"] for i in sr1[:,0]], '.', color = "k", label="Sel Pop {}".format(simulation_params["recording_params"]["pop_recorded"][1]))
+    axs['lower_left'].set_ylabel("# cell", color="k", fontsize=labelsize)
+    axs['lower_left'].set_xlabel("Time [ms]", fontsize=labelsize)
+    axs['lower_left'].tick_params(labelsize=labelsize, pad=10, axis ='x')
+    axs['lower_left'].tick_params(labelsize=labelsize, axis ='y')
+    axs['lower_left'].set_yticks([0,network_params["N_exc"]*network_params["f"]])
+    axs['lower_left'].set_ylim(0.0, network_params["N_exc"]*network_params["f"])
     x_min = 2000.0
-    x_max=6000.0
-    ax0.set_xlim(x_min, x_max)
-    ax0.set_yticklabels(['0','80'])
-    ax0.text(-0.095,1.0,panel, transform=ax0.transAxes, weight="bold", fontsize=labelsize+3)
-    ax02=ax0.twinx()
-    ax02.set_navigate(False)
+    x_max = 7000.0
+    axs['lower_left'].set_xlim(x_min, x_max)
+    axs['upper_left'].set_xlim(x_min, x_max)
+    axs['lower_left'].set_yticklabels(['0',str(int(network_params["N_exc"]*network_params["f"]))])
+    axs['lower_left'].text(-0.095,2.3,panel, transform=axs['lower_left'].transAxes, weight="bold", fontsize=labelsize+3)
     if(stp==True):
-        ax02.plot(t, x, 'r', linewidth = 2.5, label="x")
-        ax02.plot(t, u, "b", linewidth = 2.5, label="u")
-        ax02.set_ylim(0,1.0)
+        axs2=axs['lower_left'].twinx()
+        axs2.set_navigate(False)
+        axs2.plot(t, x, 'r', linewidth = 2.5, label="x")
+        plt.fill_between(t, x-xstd, x+xstd, color="red", alpha = 0.25)
+        axs2.plot(t, u, "b", linewidth = 2.5, label="u")
+        plt.fill_between(t, u-ustd, u+ustd, color="blue", alpha = 0.25)
+        #axs2.plot(t, np.asarray(x)*np.asarray(u), "purple", linewidth = 2.5, label="x*u")
+        axs2.set_ylim(0,1.0)
     
-    #ax02.set_ylabel("x, u", fontsize=labelsize)
-    plt.text(1.085, 0.65, 'x', color='red', transform=ax02.transAxes, fontsize=labelsize+5)
-    plt.text(1.085, 0.35, 'u', color='blue', transform=ax02.transAxes, fontsize=labelsize+5)
-    
+        #axs2.set_ylabel("x, u", fontsize=labelsize)
+        plt.text(1.085, 0.65, 'x', color='red', transform=axs2.transAxes, fontsize=labelsize+5)
+        plt.text(1.085, 0.35, 'u', color='blue', transform=axs2.transAxes, fontsize=labelsize+5)
 
-    ax02.tick_params(labelsize=labelsize)
-    ax02.tick_params(axis ='y')
+        axs2.tick_params(labelsize=labelsize)
+        axs2.tick_params(axis ='y')
 
 
     # spontaneous rate
     t_start2 = simulation_params["recording_params"]["spike_recording_params"]["start"] + 450.0
-    t_stop2 = network_params["item_loading"]["origin"][0]
+    if("item_loading" in network_params):
+        t_stop2 = network_params["item_loading"]["origin"][0]
+    if("seq_item_loading" in network_params):
+        t_stop2 = network_params["seq_item_loading"]["origin"][0]
+    #t_stop2 = network_params["item_loading"]["origin"][0]
     # delay period
-    t_start1 = network_params["item_loading"]["origin"][0] + network_params["stimulation_params"]["T_cue"]
+    t_start1 = t_stop2 + network_params["stimulation_params"]["T_cue"]
     if("nonspecific_readout_signals" in network_params):
         t_stop1 = network_params["nonspecific_readout_signals"]["origin"][0]
     elif("nonspecific_noise" in network_params):
@@ -210,11 +261,17 @@ def figure2(stp = False, t=[], x=[], u=[], panel="A"):
         t_stop1 = simulation_params["eta_end_origin"]
 
     # put arrows indicating spontaneous activity and delay periods
-    ax0.hlines(y=0.0, xmin=t_start1, xmax=t_stop1, color="orange", linewidth=7)
-    ax0.hlines(y=0.0, xmin=t_start2, xmax=t_stop2, color="skyblue", linewidth=7)
+    axs['lower_left'].hlines(y=0.0, xmin=t_start1, xmax=t_stop1, color="orange", linewidth=7)
+    axs['lower_left'].hlines(y=0.0, xmin=t_start2, xmax=t_stop2, color="skyblue", linewidth=7)
+    
+    occurrencies1 = firing_rate(t_start1, t_stop1, sr0)
+    occurrencies2 = firing_rate(t_start2, t_stop2, sr0)
 
-    occurrencies1 = firing_rate(t_start1, t_stop1)
-    occurrencies2 = firing_rate(t_start2, t_stop2)
+    print("Non-selective population")
+    occurrencies_dum = firing_rate(t_start2, t_stop2, srs[-2])
+    print("Inhibitory population")
+    occurrencies_dum = firing_rate(t_start2, t_stop2, srs[-1])
+
     SE = sr0
     dum = int(np.min(SE[:,0]))
     N_neurons_recorded = int(network_params["N_exc"]*network_params["f"]*simulation_params["recording_params"]["fraction_pop_recorded"])
@@ -225,22 +282,26 @@ def figure2(stp = False, t=[], x=[], u=[], panel="A"):
     norm = np.sum(counts)
     counts = [counts[i]/norm for i in range(len(counts))]
     #a1.title(r"$\Delta$ fr between delay period and spontaneous state in the target population", fontsize=titlesize)
-    ax1.bar(bins[:-1], counts, width = bins[1] - bins[0], color="cornflowerblue", align="center", linewidth=0.2, edgecolor="w")
-    ax1.set_xlabel("Firing rate difference [Hz]", fontsize=labelsize)
-    ax1.set_ylabel("Fraction of cells", fontsize=labelsize)
+    axs['right'].bar(bins[:-1], counts, width = bins[1] - bins[0], color="cornflowerblue", align="center", linewidth=0.2, edgecolor="w")
+    axs['right'].set_xlabel("Firing rate difference [Hz]", fontsize=labelsize)
+    axs['right'].set_ylabel("Fraction of cells", fontsize=labelsize)
     if(panel=="A"):
-        ax1.set_xlim(-1,10)
-        ax1.set_xticks([-5,0,5,10])
+        axs['right'].set_xlim(-1,10)
+        axs['right'].set_xticks([-5,0,5,10])
     else:
-        ax1.set_xlim(-1,15)
-        ax1.set_xticks([0,5,10,15])
-    ax1.tick_params(labelsize=labelsize)
+        axs['right'].set_xlim(-1,15)
+        #axs['right'].set_xticks([0,5,10,15])
+        axs['right'].set_xticks([-5,0,5,10])
+    axs['right'].tick_params(labelsize=labelsize)
+
+
     plt.subplots_adjust(left=0.06, right=0.976, top=0.925, bottom=0.207)
     #plt.subplots_adjust(left=0.06, right=0.976, top=0.89, bottom=0.207)
     #plt.suptitle("multapses and autapses disabled", fontsize=labelsize)
     plt.savefig(simulation_params['data_path']+"fig2{panel}.png".format(panel=panel))
     
-    #plt.draw()
+    plt.draw()
+
 
 def figure3(stp=False, stp0= [], stp1 =[], panel="A"):
     labelsize=19
@@ -407,7 +468,41 @@ def figure4(stp=False, stp0= [], stp1 =[], stp2 = []):
     plt.savefig(simulation_params['data_path']+"fig4.png")
 
 
-def evolution(t_start = 0.0, t_stop = 1.0, x_start = 1.0, u_start = 0.3, dt = 0.1):
+def get_weights_distrib(npop):
+    """
+        Get synaptic weights of the tsodyks3_synapse connections having the neurons of npop as source.
+
+        Parameters
+            npop : int
+                The id of the selective population
+        Returns:
+            total_weights : Pandas Series
+                Collection of the synaptic weights from all the connections recorded
+            within_pop_weights: Pandas Series
+                Collection of the synaptic weights targeting neurons belonging
+                to the same selective population
+            outgoing_weights : Pandas Series
+                Collection of the synaptic weights targeting neurons not belonging
+                to the selective populations
+    """
+
+    # import the synaptic data recorded
+    fn = "stp_pop_"+str(npop)+".csv"
+    df = pd.read_csv(data_path + "stp_params/" + fn)
+    total_weights = df["weight"]
+    
+    #select the weights with target inside the same population from the others
+    min_source = df["source"].min()
+    max_source = df["source"].max()
+    # weights of the self connections
+    within_pop_weights = df.loc[(df["target"] > min_source) & (df["target"] <= max_source), "weight"]
+    # weights of the connections targeting neurons not belonging to the same population
+    outgoing_weights = df.loc[(df["target"] < min_source) | (df["target"] > max_source), "weight"]
+
+    return(total_weights, within_pop_weights, outgoing_weights)
+
+
+def evolution(t_start = 0.0, t_stop = 1.0, x_start = 1.0, u_start = 0.3, dt = 0.1, tauD=1500.0, tauF=200.0):
     t = np.arange(t_start, t_stop, dt)
     x = 1.0 + (x_start - 1.0)*np.exp(-(t - t_start)/tauD)
     u = U + (u_start - U)*np.exp(-(t-t_start)/tauF)
@@ -439,72 +534,162 @@ def save_stp_data(npop):
     np.savetxt(data_path + "stp_params/" + "stp_t_last_spike_"+str(npop)+".dat", t_last_spike)
 
 
-def get_stp_data_evol(xtot, utot, t_last):
-    record_interval = simulation_params["recording_params"]["stp_record_interval"]
-    sim_steps = np.arange(record_interval, simulation_params["t_sim"]+record_interval, record_interval)
-    lenght = int(network_params["N_exc"]*network_params["f"]*simulation_params["recording_params"]["stp_fraction_recorded"])
-    t = np.arange(0.0, simulation_params["t_sim"], 0.1)
-    xnew = np.ones((lenght, len(t)))
-    unew = np.ones((lenght, len(t)))
-    for row in range(lenght):
-        print("{}/{}".format(row, lenght), end = '\r')
-        x = xtot[row,:]
-        u = utot[row,:]
-        t_last[row][0] = 0.0   
-        diffx = np.diff(x)
-        diffx_null = (diffx != 0)
-        ids = []
-        for i in range(len(diffx_null)):
-            if diffx_null[i]:
-                ids.append(i)
+def get_neuron_spiketimes(sr, nid):
+    """
+        Get spike times of a neuron belonging to a certain pop.
 
-        ids.append(len(diffx_null))
-        ids[0]=0
-        times = []
-        x1 = []
-        u1 = []
-        for i in ids:
-            times.append(round(t_last[row][i],1))
-            x1.append(x[i])
-            u1.append(u[i])
+        Parameters
+            sr : array
+                Array of spikes recorded from a population
+            nid : int
+                Neuron id
+        Returns:
+            spike_times : list of floats
+                List of spike times
+    """
 
-        times.append(simulation_params["t_sim"])
+    sr = sr.T
+    df = pd.DataFrame({"id": list(map(int, sr[0])), "time": sr[1]})
+    spike_times = df.loc[(df["id"] == nid), "time"]
+    
+    return(list(spike_times))
+    
 
-        x2 = np.asarray([])
-        u2 = np.asarray([])
-        for timestep in range(len(times)-1):
-            t_start = times[timestep]
-            t_stop = times[timestep+1]
-            x_start = x1[timestep]
-            u_start = u1[timestep]
-            tdum, xdum, udum = evolution(t_start, t_stop, x_start, u_start)
-            x2 = np.concatenate([x2, xdum], axis=0)
-            u2 = np.concatenate([u2, udum], axis=0)
-        
-        xnew[row,:] = x2[0:len(t)]
-        unew[row,:] = u2[0:len(t)]
+def get_stp_data_evol(sr, popid, dt, subset_targets=True, targets=100):
+    """
+        Get STP variables correctly evolved for all the simulation for each neuron connection.
 
-    return(xnew, unew)
+        Parameters
+            sr : array
+                Array of spikes recorded from a population
+            popid : int
+                Population id
+            dt: float
+                Time step for STP data evolution
+            subset_targets: bool
+                Enables the computation of the variables only for a subset of connections per neuron
+            targets: int
+                If subset_targets is True, determines how many connections per neuron have to be considered
+        Returns:
+            xnew : list of floats
+                List of values of x evolved for all the simulation obtained for all the neurons recorded and all its connections
+            unew : list of floats
+                List of values of u evolved for all the simulation obtained for all the neurons recorded and all its connections
+    """
+    neurons_recorded = 2 #int(network_params["N_exc"]*network_params["f"]*simulation_params["recording_params"]["stp_fraction_recorded"])
+    # time array, starts at the time at which the spike recording starts
+    t = np.arange(simulation_params["recording_params"]["spike_recording_params"]["start"], simulation_params["t_sim"], dt)
+    # arrays for stp data
+    xnew = []
+    unew = []
+    # ID recorded neurons (i.e., source ID)
+    nids = [i+1+popid*800 for i in range(neurons_recorded)]
+    U = network_params["stp_params"]["U"]
+
+    # prepare the array for putting the stp data
+    df = pd.read_csv(data_path + "stp_params/stp_pop_" + str(popid) + ".csv")
+
+    for n in nids:
+        st = [simulation_params["recording_params"]["spike_recording_params"]["start"]] + get_neuron_spiketimes(sr, n)
+        st.append(simulation_params["t_sim"]-1.0)
+        print(st)
+        # list (a value for each target neuron)
+        x0 = df[df["source"]==n]["x"].tolist()
+        u0 = df[df["source"]==n]["u"].tolist()
+        tauF = df[df["source"]==n]["tau_F"].tolist()
+        tauD = df[df["source"]==n]["tau_D"].tolist()
+
+        # diminish the dataset size (useful to save RAM and to average the STP variables using the same amount of data per neuron)
+        if(subset_targets==True):
+            if(len(x0)>targets):
+                x0 = x0[0:targets]
+                u0 = u0[0:targets]
+                tauF = tauF[0:targets]
+                tauD = tauD[0:targets]
+            else:
+                pass
+
+        # list to store the lists for x and u evolved
+        xlist = []
+        ulist = []
+
+        # get values of x and u for every synaptic contact
+        for i in range(len(x0)):
+            # first of all, append the values recorded
+            x = [x0[i]]
+            u = [u0[i]]
+            # and then evolve according to the spike times of the source neuron
+            for timestep in range(1,len(st)-1):
+                t_start = st[timestep-1]+dt
+                t_stop = st[timestep]
+                x_start = x[-1]
+                u_start = u[-1]
+                dumt, dumx, dumu = evolution(t_start, t_stop, x_start, u_start, dt, tauD[i], tauF[i])
+                x.extend(list(dumx))
+                u.extend(list(dumu))
+                # a spike is emitted! Edit the values...
+                u.append(u[-1] + U*(1.0 - u[-1]))
+                x.append(x[-1] - u[-1]*x[-1])
+            
+            # last evolution, from the last spike to the end of the simulation
+            dumt, dumx, dumu = evolution(st[-2]+dt, st[-1]+dt, x[-1], u[-1], dt, tauD[i], tauF[i])
+            x.extend(list(dumx))
+            u.extend(list(dumu))
+            dumt = []
+            
+            xlist.append(x)
+            ulist.append(u)
+
+        xnew.append(xlist)
+        unew.append(ulist)
+    
+    # empty everything
+    xlist = []
+    ulist = []
+    df = {}
+
+    return(t, xnew, unew)
 
 
-def stp_data(npop):
-    sim_steps = np.arange(0.0, simulation_params["t_sim"], 0.1)
-    xtot = np.loadtxt(data_path + "stp_params/" + "std_x_"+str(npop)+".dat")
-    utot = np.loadtxt(data_path + "stp_params/" + "std_u_"+str(npop)+".dat")
-    t_last = np.loadtxt(data_path + "stp_params/" + "stp_t_last_spike_"+str(npop)+".dat")
+def average_stp_data(sr, popid, dt, neuron):
+    """
+        Get averaged STP variables for a neuron of a selective population.
 
-    xnew, unew = get_stp_data_evol(xtot, utot, t_last)
+        Parameters
+            sr : array
+                Array of spikes recorded from a population
+            popid : int
+                Population id
+            dt: float
+                Time step for STP data evolution
+            neuron: int
+                ID of the neuron to be taken as a reference. The value of STP variables will be averaged over its connections.
+        Returns:
+            t : list of floats
+                Time axis, in ms.
+            xavg : list of floats
+                List of values of x averaged over the connections of a neuron of the population.
+            uavg : list of floats
+                List of values of u averaged over the connections of a neuron of the population.
+            xstd : list of floats
+                Standard deviation for the values of x in each timestep.
+            ustd : list of floats
+                Standard deviation for the values of u in each timestep.
+    """
 
-    xavg = np.zeros(len(sim_steps))
-    uavg = np.zeros(len(sim_steps))
-    for i in range(len(sim_steps)):
-        xavg[i] = np.mean(xnew[:,i])
-        uavg[i] = np.mean(unew[:,i])
+    t, xnew, unew = get_stp_data_evol(sr, popid, dt)
 
-    return(sim_steps, xavg, uavg)
+    # take a neuron as a reference and average over its connections
+    xnew = np.asarray(xnew[neuron])
+    unew = np.asarray(unew[neuron])
 
+    xavg = np.mean(xnew, axis=0)
+    uavg = np.mean(unew, axis=0)
+    xstd = np.std(xnew, axis=0)
+    ustd = np.std(unew, axis=0)
 
-
+    return(t, xavg, uavg, xstd, ustd)
+    
 
 data_path = "data/"
 
@@ -531,6 +716,7 @@ sr2 = srs[2]
 sr3 = srs[3]
 sr4 = srs[4]
 
+
 raster_plot()
 
 figure = 2
@@ -540,12 +726,9 @@ panel = "B"
 
 if figure == 4:
     if stp:
-        save_stp_data(0)
-        save_stp_data(1)
-        save_stp_data(2)
-        t0, x0, u0 = stp_data(0)
-        t1, x1, u1 = stp_data(1)
-        t2, x2, u2 = stp_data(2)
+        t0, x0, u0, xstd0, ustd0  = average_stp_data(sr0, 0, 0.1, 0)
+        t1, x1, u1, xstd1, ustd1  = average_stp_data(sr1, 1, 0.1, 0)
+        t2, x2, u2, xstd2, ustd2  = average_stp_data(sr2, 2, 0.1, 0)
         figure4(stp, stp0 = [t0, x0, u0], stp1 = [t1, x1, u1], stp2 = [t2, x2, u2])
     else:
         print("Please load correct data.")
@@ -554,10 +737,8 @@ if figure == 4:
 
 if figure == 3:
     if stp:
-        save_stp_data(0)
-        save_stp_data(1)
-        t0, x0, u0 = stp_data(0)
-        t1, x1, u1 = stp_data(1)
+        t0, x0, u0, xstd0, ustd0  = average_stp_data(sr0, 0, 0.1, 0)
+        t1, x1, u1, xstd1, ustd1  = average_stp_data(sr1, 1, 0.1, 0)
         figure3(stp, stp0 = [t0, x0, u0], stp1 = [t1, x1, u1], panel=panel)
     else:
         figure3(stp, panel=panel)
@@ -565,9 +746,8 @@ if figure == 3:
 
 if figure == 2:
     if stp:
-        save_stp_data(0)
-        t, x, u = stp_data(0)
-        figure2(stp = True, t=t, x=x, u=u, panel=panel)
+        t, xmean, umean, xstd, ustd  = average_stp_data(sr0, 0, 0.1, 0)
+        figure2(stp = True, t=t, x=xmean, u=umean, xstd=xstd, ustd=ustd, panel=panel)
     else:
         figure2(stp = False, panel=panel)
 

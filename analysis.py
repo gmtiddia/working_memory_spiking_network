@@ -678,7 +678,7 @@ def get_stp_data_evol(sr, popid, dt, subset_targets=True, targets=1):
     return(time, xnew, unew)
 
 
-def average_stp_data(sr, popid, dt, neuron):
+def average_stp_data(sr, popid, dt, single_neuron=False, neuronid=0):
     """
         Get averaged STP variables for a neuron of a selective population.
 
@@ -689,15 +689,17 @@ def average_stp_data(sr, popid, dt, neuron):
                 Population id
             dt: float
                 Time step for STP data evolution
-            neuron: int
+            neuron: bool
+                Returns the STP variables averaged over the connections of a single neuron. If False, averages over the population.
+            neuronid: int
                 ID of the neuron to be taken as a reference. The value of STP variables will be averaged over its connections.
         Returns:
             t : list of floats
                 Time axis, in ms.
             xavg : list of floats
-                List of values of x averaged over the connections of a neuron of the population.
+                List of values of x averaged over the connections.
             uavg : list of floats
-                List of values of u averaged over the connections of a neuron of the population.
+                List of values of u averaged over the connections.
             xstd : list of floats
                 Standard deviation for the values of x in each timestep.
             ustd : list of floats
@@ -708,16 +710,36 @@ def average_stp_data(sr, popid, dt, neuron):
 
     neurons_recorded = int(network_params["N_exc"]*network_params["f"]*simulation_params["recording_params"]["stp_fraction_recorded"])
 
-    # take a neuron as a reference and average over its connections
-    xnew = np.asarray(xnew[neuron])
-    unew = np.asarray(unew[neuron])
+    if(single_neuron):
+        # take a neuron as a reference and average over its connections
+        xnew = np.asarray(xnew[neuron])
+        unew = np.asarray(unew[neuron])
 
-    xavg = np.mean(xnew, axis=0)
-    uavg = np.mean(unew, axis=0)
-    xstd = np.std(xnew, axis=0)
-    ustd = np.std(unew, axis=0)
+        xavg = np.mean(xnew, axis=0)
+        uavg = np.mean(unew, axis=0)
+        xstd = np.std(xnew, axis=0)
+        ustd = np.std(unew, axis=0)
 
-    return(t, xavg, uavg, xstd, ustd)
+        return(t, xavg, uavg, xstd, ustd)
+    
+    else:
+        xavg_sn = []
+        uavg_sn = []
+        # average over the connection of each neuron
+        for n in range(neurons_recorded):
+            xavg_sn.append(np.mean(xnew[n], axis=0))
+            uavg_sn.append(np.mean(unew[n], axis=0))
+        
+        xavg_sn = np.asarray(xavg_sn)
+        uavg_sn = np.asarray(uavg_sn)
+        
+        # average over the neurons
+        xavg = np.mean(xavg_sn, axis=0)
+        uavg = np.mean(uavg_sn, axis=0)
+        xstd = np.std(xavg_sn, axis=0)
+        ustd = np.std(uavg_sn, axis=0)
+
+        return(t, xavg, uavg, xstd, ustd)
     
 
 data_path = "data/"
@@ -755,9 +777,9 @@ panel = "B"
 
 if figure == 4:
     if stp:
-        t0, x0, u0, xstd0, ustd0  = average_stp_data(sr0, 0, 0.1, 0)
-        t1, x1, u1, xstd1, ustd1  = average_stp_data(sr1, 1, 0.1, 0)
-        t2, x2, u2, xstd2, ustd2  = average_stp_data(sr2, 2, 0.1, 0)
+        t0, x0, u0, xstd0, ustd0  = average_stp_data(sr0, 0, 0.1, True, 0)
+        t1, x1, u1, xstd1, ustd1  = average_stp_data(sr1, 1, 0.1, True, 0)
+        t2, x2, u2, xstd2, ustd2  = average_stp_data(sr2, 2, 0.1, True, 0)
         figure4(stp, stp0 = [t0, x0, u0], stp1 = [t1, x1, u1], stp2 = [t2, x2, u2])
     else:
         print("Please load correct data.")
@@ -766,8 +788,8 @@ if figure == 4:
 
 if figure == 3:
     if stp:
-        t0, x0, u0, xstd0, ustd0  = average_stp_data(sr0, 0, 0.1, 0)
-        t1, x1, u1, xstd1, ustd1  = average_stp_data(sr1, 1, 0.1, 0)
+        t0, x0, u0, xstd0, ustd0  = average_stp_data(sr0, 0, 0.1, True, 0)
+        t1, x1, u1, xstd1, ustd1  = average_stp_data(sr1, 1, 0.1, True, 0)
         figure3(stp, stp0 = [t0, x0, u0], stp1 = [t1, x1, u1], panel=panel)
     else:
         figure3(stp, panel=panel)
@@ -775,7 +797,7 @@ if figure == 3:
 
 if figure == 2:
     if stp:
-        t, xmean, umean, xstd, ustd  = average_stp_data(sr0, 0, 0.1, 5)
+        t, xmean, umean, xstd, ustd  = average_stp_data(sr0, 0, 0.1, False, 5)
         figure2(stp = True, t=t, x=xmean, u=umean, xstd=xstd, ustd=ustd, panel=panel)
     else:
         figure2(stp = False, panel=panel)

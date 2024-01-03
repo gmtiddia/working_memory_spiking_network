@@ -503,40 +503,42 @@ def get_weights_distrib(npop):
 
 
 def evolution(t_start = 0.0, t_stop = 1.0, x_start = 1.0, u_start = 0.3, dt = 0.1, tauD=1500.0, tauF=200.0):
+    """
+        Evolves the STP variables x and u.
+
+        Parameters
+            t_start : float
+                Time at which we start the time evolution (in ms).
+            t_start : float
+                Time at which we stop the time evolution (in ms).
+            x_start : float
+                Value of x at t_start.
+            u_start : float
+                Value of u at t_start.
+            dt : float
+                Time step for evolution.
+            tauD : float
+                Time constant for depression (STD).
+            tauF : float
+                Time constant for facilitation (STF).
+        Returns:
+            t : list of floats
+                List of spike times.
+            x : list of floats
+                List of x values.
+            u : list of floats
+                List of u values.
+    """
     t = np.arange(t_start, t_stop, dt)
+    t = np.asarray([round(float(i), 1) for i in t])
     x = 1.0 + (x_start - 1.0)*np.exp(-(t - t_start)/tauD)
     u = U + (u_start - U)*np.exp(-(t-t_start)/tauF)
     return(t,x,u)
 
 
-def save_stp_data(npop):
-    record_interval = simulation_params["recording_params"]["stp_record_interval"]
-    sim_steps = np.arange(record_interval, simulation_params["t_sim"]+record_interval, record_interval)
-    stp_pop_rec = simulation_params["recording_params"]["stp_pop_recorded"]
-    fn = "stp_params_tot_"+str(npop)+".csv"
-    lenght = int(network_params["N_exc"]*network_params["f"]*simulation_params["recording_params"]["stp_fraction_recorded"])
-    xtot = np.zeros((lenght, len(sim_steps)))
-    utot = np.zeros((lenght, len(sim_steps)))
-    t_last_spike = np.zeros((lenght, len(sim_steps)+1))
-    
-    df = pd.read_csv(data_path + "stp_params/" + fn)
-
-    for step, time in enumerate(sim_steps):
-        dum = df[df["time"] == time]
-        t_last_spike[:, step] = list(dum["t_last_spike"])
-        xtot[:, step] = list(dum["x"])
-        utot[:, step] = list(dum["u"])
-    
-    t_last_spike[:, step+1] = [simulation_params["t_sim"] for i in range(len(dum["t_last_spike"]))]
-            
-    np.savetxt(data_path + "stp_params/" + "std_x_"+str(npop)+".dat", xtot)
-    np.savetxt(data_path + "stp_params/" + "std_u_"+str(npop)+".dat", utot)
-    np.savetxt(data_path + "stp_params/" + "stp_t_last_spike_"+str(npop)+".dat", t_last_spike)
-
-
 def get_neuron_spiketimes(sr, nid):
     """
-        Get spike times of a neuron belonging to a certain pop.
+        Get spike times of a neuron belonging to a certain population.
 
         Parameters
             sr : array
@@ -555,7 +557,7 @@ def get_neuron_spiketimes(sr, nid):
     return(list(spike_times))
     
 
-def get_stp_data_evol(sr, popid, dt, subset_targets=True, targets=10):
+def get_stp_data_evol(sr, popid, dt, subset_targets=True, targets=1):
     """
         Get STP variables correctly evolved for all the simulation for each neuron connection.
 
@@ -576,9 +578,11 @@ def get_stp_data_evol(sr, popid, dt, subset_targets=True, targets=10):
             unew : list of floats
                 List of values of u evolved for all the simulation obtained for all the neurons recorded and all its connections
     """
+
     neurons_recorded = int(network_params["N_exc"]*network_params["f"]*simulation_params["recording_params"]["stp_fraction_recorded"])
     # time array, starts at the time at which the spike recording starts
-    t = np.arange(simulation_params["recording_params"]["spike_recording_params"]["start"], simulation_params["t_sim"], dt)
+    time = np.arange(simulation_params["recording_params"]["spike_recording_params"]["start"], simulation_params["t_sim"], dt)
+    time = [round(float(t), 1) for t in time]
     # arrays for stp data
     xnew = []
     unew = []
@@ -591,7 +595,8 @@ def get_stp_data_evol(sr, popid, dt, subset_targets=True, targets=10):
 
     for n in nids:
         st = [simulation_params["recording_params"]["spike_recording_params"]["start"]] + get_neuron_spiketimes(sr, n)
-        st.append(simulation_params["t_sim"]-1.0)
+        st.append(simulation_params["t_sim"])
+        st = [round(float(t), 1) for t in st]
         # list (a value for each target neuron)
         x0 = df[df["source"]==n]["x"].tolist()
         u0 = df[df["source"]==n]["u"].tolist()
@@ -611,43 +616,66 @@ def get_stp_data_evol(sr, popid, dt, subset_targets=True, targets=10):
         # list to store the lists for x and u evolved
         xlist = []
         ulist = []
+        tlist = []
 
         # get values of x and u for every synaptic contact
         for i in range(len(x0)):
             # first of all, append the values recorded
             x = [x0[i]]
             u = [u0[i]]
+            t = [simulation_params["recording_params"]["spike_recording_params"]["start"]]
             # and then evolve according to the spike times of the source neuron
             for timestep in range(1,len(st)-1):
-                t_start = st[timestep-1]+dt
-                t_stop = st[timestep]
+                t_start = round(float(st[timestep-1]+dt), 1)
+                t_stop = round(float(st[timestep]), 1)
                 x_start = x[-1]
                 u_start = u[-1]
                 dumt, dumx, dumu = evolution(t_start, t_stop, x_start, u_start, dt, tauD[i], tauF[i])
                 x.extend(list(dumx))
                 u.extend(list(dumu))
+                t.extend(list(dumt))
                 # a spike is emitted! Edit the values...
                 u.append(u[-1] + U*(1.0 - u[-1]))
                 x.append(x[-1] - u[-1]*x[-1])
+                t.append(round(float(st[timestep]), 1))
             
             # last evolution, from the last spike to the end of the simulation
-            dumt, dumx, dumu = evolution(st[-2]+dt, st[-1]+dt, x[-1], u[-1], dt, tauD[i], tauF[i])
+            dumt, dumx, dumu = evolution(st[-2], st[-1], x[-1], u[-1], dt, tauD[i], tauF[i])
             x.extend(list(dumx))
             u.extend(list(dumu))
-            dumt = []
-            
-            xlist.append(x)
-            ulist.append(u)
+            t.extend(list(dumt))
+
+            # sometimes some duplicates may appear. The solution is to round the time values and
+            # discard the duplicates, both in the time list and in the x and u ones.
+            t = [round(i, 1) for i in t]
+            duplicates = (np.diff(t)==0.0)
+            # ids to remove
+            ids = []
+            for i in range(len(duplicates)):
+                if duplicates[i]:
+                    ids.append(i)
+            for i in range(len(ids)):
+                del t[ids[i]]
+                del x[ids[i]]
+                del u[ids[i]]
+
+            if (len(x)>len(time)):
+                xlist.append(x[1:])
+                ulist.append(u[1:])
+            else:
+                xlist.append(x)
+                ulist.append(u)
 
         xnew.append(xlist)
         unew.append(ulist)
+        
     
     # empty everything
     xlist = []
     ulist = []
     df = {}
 
-    return(t, xnew, unew)
+    return(time, xnew, unew)
 
 
 def average_stp_data(sr, popid, dt, neuron):
@@ -677,6 +705,8 @@ def average_stp_data(sr, popid, dt, neuron):
     """
 
     t, xnew, unew = get_stp_data_evol(sr, popid, dt)
+
+    neurons_recorded = int(network_params["N_exc"]*network_params["f"]*simulation_params["recording_params"]["stp_fraction_recorded"])
 
     # take a neuron as a reference and average over its connections
     xnew = np.asarray(xnew[neuron])
@@ -745,7 +775,7 @@ if figure == 3:
 
 if figure == 2:
     if stp:
-        t, xmean, umean, xstd, ustd  = average_stp_data(sr0, 0, 0.1, 0)
+        t, xmean, umean, xstd, ustd  = average_stp_data(sr0, 0, 0.1, 5)
         figure2(stp = True, t=t, x=xmean, u=umean, xstd=xstd, ustd=ustd, panel=panel)
     else:
         figure2(stp = False, panel=panel)

@@ -1,0 +1,10 @@
+/home/luca/Desktop/stp_prove/working_memory_spiking_network/target/CMakeFiles/dist.dir
+/home/luca/Desktop/stp_prove/working_memory_spiking_network/target/CMakeFiles/nestml_87ae162fab9947689cd795b14e510683_module_module.dir
+/home/luca/Desktop/stp_prove/working_memory_spiking_network/target/CMakeFiles/package.dir
+/home/luca/Desktop/stp_prove/working_memory_spiking_network/target/CMakeFiles/package_source.dir
+/home/luca/Desktop/stp_prove/working_memory_spiking_network/target/CMakeFiles/edit_cache.dir
+/home/luca/Desktop/stp_prove/working_memory_spiking_network/target/CMakeFiles/rebuild_cache.dir
+/home/luca/Desktop/stp_prove/working_memory_spiking_network/target/CMakeFiles/list_install_components.dir
+/home/luca/Desktop/stp_prove/working_memory_spiking_network/target/CMakeFiles/install.dir
+/home/luca/Desktop/stp_prove/working_memory_spiking_network/target/CMakeFiles/install/local.dir
+/home/luca/Desktop/stp_prove/working_memory_spiking_network/target/CMakeFiles/install/strip.dir

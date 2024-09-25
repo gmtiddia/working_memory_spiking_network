@@ -506,7 +506,7 @@ def stp_data(npop):
 
 
 
-data_path = "data/"
+data_path = "/home/luca/Desktop/stp_prove/working_memory_spiking_network/data/"
 
 ### import network and simulation parameters
 

@@ -1,4 +1,5 @@
-# Test tsodyks3_synapse
+# Test tsodyks3_synapse NESTML implementation
+
 Type
 
 ```
@@ -13,3 +14,8 @@ python3 plot_tsodyks3_evaluation.py
 ```
 
 to reproduce Figure S5 of the Supplementary Material of the publication.
+
+
+## Compare the NESTML implementation with the NEST implementation
+
+To compare the versions of the synapse model implemented on the source code of the NEST simulator and on NESTML please see the content of the  [comparison_tsodyks3_NESTML](comparison_tsodyks3_NESTML/) directory.

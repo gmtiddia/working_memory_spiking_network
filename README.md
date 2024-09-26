@@ -7,7 +7,7 @@ Spiking network model and analysis scripts for the publication:
 If you use the code, cite us using the citation above.
 
 # Requirements
-To run the model you need both [NEST 3.X version](https://github.com/nest/nest-simulator) and [NESTML](https://github.com/nest/nestml) installed. For installation instructions, follow the guides for [NEST](https://nest-simulator.readthedocs.io/en/stable/installation/index.html) and [NESTML](https://nestml.readthedocs.io/en/latest/installation.html).
+To run the model you need both [NEST 3.X](https://github.com/nest/nest-simulator) and [NESTML](https://github.com/nest/nestml) installed. For installation instructions, follow the guides for [NEST](https://nest-simulator.readthedocs.io/en/stable/installation/index.html) and [NESTML](https://nestml.readthedocs.io/en/latest/installation.html).
 
 Additionally, to run the model and analyze the data, Python and additional packages are required. To produce the data of the aforementioned publication, the following software was used:
 - Python 3.9.7

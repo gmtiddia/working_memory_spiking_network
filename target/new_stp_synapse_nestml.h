@@ -18,7 +18,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with NEST.  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Generated from NESTML at time: 2024-09-25 10:54:28.751273
+ *  Generated from NESTML at time: 2024-09-26 13:18:51.722242
 **/
 
 #ifndef NEW_STP_SYNAPSE_NESTML_H

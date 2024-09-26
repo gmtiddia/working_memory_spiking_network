@@ -2,7 +2,7 @@
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/tmp/nestml_target_43t7czuu")
+  set(CMAKE_INSTALL_PREFIX "/tmp/nestml_target_6f236286")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -43,25 +43,25 @@ if(NOT DEFINED CMAKE_OBJDUMP)
 endif()
 
 if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_COMPONENT)
-  if(EXISTS "$ENV{DESTDIR}/tmp/nestml_target_43t7czuu/nestml_87ae162fab9947689cd795b14e510683_module.so" AND
-     NOT IS_SYMLINK "$ENV{DESTDIR}/tmp/nestml_target_43t7czuu/nestml_87ae162fab9947689cd795b14e510683_module.so")
+  if(EXISTS "$ENV{DESTDIR}/tmp/nestml_target_6f236286/nestml_4a67bb28ae0846b9b4c84811d6604034_module.so" AND
+     NOT IS_SYMLINK "$ENV{DESTDIR}/tmp/nestml_target_6f236286/nestml_4a67bb28ae0846b9b4c84811d6604034_module.so")
     file(RPATH_CHECK
-         FILE "$ENV{DESTDIR}/tmp/nestml_target_43t7czuu/nestml_87ae162fab9947689cd795b14e510683_module.so"
+         FILE "$ENV{DESTDIR}/tmp/nestml_target_6f236286/nestml_4a67bb28ae0846b9b4c84811d6604034_module.so"
          RPATH "")
   endif()
   list(APPEND CMAKE_ABSOLUTE_DESTINATION_FILES
-   "/tmp/nestml_target_43t7czuu/nestml_87ae162fab9947689cd795b14e510683_module.so")
+   "/tmp/nestml_target_6f236286/nestml_4a67bb28ae0846b9b4c84811d6604034_module.so")
   if(CMAKE_WARN_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(WARNING "ABSOLUTE path INSTALL DESTINATION : ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-  file(INSTALL DESTINATION "/tmp/nestml_target_43t7czuu" TYPE MODULE FILES "/home/luca/Desktop/stp_prove/working_memory_spiking_network/target/nestml_87ae162fab9947689cd795b14e510683_module.so")
-  if(EXISTS "$ENV{DESTDIR}/tmp/nestml_target_43t7czuu/nestml_87ae162fab9947689cd795b14e510683_module.so" AND
-     NOT IS_SYMLINK "$ENV{DESTDIR}/tmp/nestml_target_43t7czuu/nestml_87ae162fab9947689cd795b14e510683_module.so")
+  file(INSTALL DESTINATION "/tmp/nestml_target_6f236286" TYPE MODULE FILES "/home/luca/Desktop/stp_prove/working_memory_spiking_network/target/nestml_4a67bb28ae0846b9b4c84811d6604034_module.so")
+  if(EXISTS "$ENV{DESTDIR}/tmp/nestml_target_6f236286/nestml_4a67bb28ae0846b9b4c84811d6604034_module.so" AND
+     NOT IS_SYMLINK "$ENV{DESTDIR}/tmp/nestml_target_6f236286/nestml_4a67bb28ae0846b9b4c84811d6604034_module.so")
     if(CMAKE_INSTALL_DO_STRIP)
-      execute_process(COMMAND "/usr/bin/strip" "$ENV{DESTDIR}/tmp/nestml_target_43t7czuu/nestml_87ae162fab9947689cd795b14e510683_module.so")
+      execute_process(COMMAND "/usr/bin/strip" "$ENV{DESTDIR}/tmp/nestml_target_6f236286/nestml_4a67bb28ae0846b9b4c84811d6604034_module.so")
     endif()
   endif()
 endif()

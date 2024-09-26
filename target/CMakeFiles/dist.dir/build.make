@@ -67,7 +67,7 @@ include CMakeFiles/dist.dir/compiler_depend.make
 include CMakeFiles/dist.dir/progress.make
 
 CMakeFiles/dist:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/luca/Desktop/stp_prove/working_memory_spiking_network/target/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Creating a source distribution from nestml_87ae162fab9947689cd795b14e510683_module..."
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/luca/Desktop/stp_prove/working_memory_spiking_network/target/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Creating a source distribution from nestml_4a67bb28ae0846b9b4c84811d6604034_module..."
 	/usr/bin/gmake package_source
 
 dist: CMakeFiles/dist

@@ -24,6 +24,10 @@ from model.default_params import default_network_params, default_simulation_para
 from model.default_params import update_params, check_params
 from model.model_helpers import get_weight, noise_params
 
+
+
+# Synapse model, NESTML
+
 new_stp_synapse= """
 # Synapse model of STP with NESTML
 
@@ -57,6 +61,8 @@ model new_stp_synapse:
         t_ls = t
 
 """
+
+#Generate the target directory with all the files necessary to implement the synapse model in NEST 3.X
 
 module_name, synapse_model_name = \
         NESTCodeGeneratorUtils.generate_code_for(new_stp_synapse,
@@ -295,15 +301,16 @@ class WMModel:
         Prepare NEST Kernel.
 
         """
-        #nest.ResetKernel()
         nest.ResetKernel()
         nest.SetKernelStatus({"print_time" : True,
                               "resolution": self.simulation_params["dt"],
                               "rng_seed": self.simulation_params["master_seed"],
                               "local_num_threads": self.simulation_params["threads"]})
+        
+        #implement STP synapse model
         nest.Install(module_name)
         nest.CopyModel(synapse_model_name, "new_stp_synapse",
-                            {"w": 0.5,
+                            {"w": 1.0,
                             "delay": 1.0,})
 
     

@@ -83,7 +83,13 @@ default_syn_params = {
     # possibility of doing self-connections
     "autapses" : True,
     # possibility of having multiple connections within two neurons
-    "multapses" : True}
+    "multapses" : True, 
+    # adds the possibility to have a normal distribution for J_p (absolute weight for potentiated synapses)
+    "Jp_normal_dist" : {"allow" : False, "std" : 0.1},
+    # adds the possibility to have a normal distribution for J_b (absolute weight for baseline synapses)
+    "Jb_normal_dist" : {"allow" : False, "std" : 0.05},
+    # fraction of facilitaded synapses randomly distributed across the connections between differend and same selective populations
+    "facil_frac" : 1.0}
 
 default_network_params.update({'syn_params': default_syn_params})
 
@@ -100,7 +106,15 @@ default_stp_params = {
     # recovery time of utilization factor [ms]
     "tau_F": 1500.0,
     # recovery time of synaptic resources [ms]
-    "tau_D": 200.0}
+    "tau_D": 200.0,
+    # adds the possibility to have a normal distribution for u0 (initial probability of relase)
+    "u0_normal_dist" : {"allow" : False, "std" : 0.05},
+    # adds the possibility to have a normal distribution for x0 (initial available resurces)
+    "x0_uniform_dist" : {"allow" : False},
+    # adds the possibility to have a normal distribution for tau_F
+    "tauF_normal_dist" : {"allow" : False, "std" : 200},
+    # adds the possibility to have a normal distribution for tau_D 
+    "tauD_normal_dist" : {"allow" : False, "std" : 20}}
 
 default_network_params.update({'stp_params': default_stp_params})
 

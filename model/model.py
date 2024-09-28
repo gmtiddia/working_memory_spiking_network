@@ -23,7 +23,7 @@ from pynestml.codegeneration.nest_code_generator_utils import NESTCodeGeneratorU
 from model.default_params import default_network_params, default_simulation_params
 from model.default_params import update_params, check_params
 from model.model_helpers import get_weight, noise_params
-
+from scipy.stats import truncnorm
 
 
 # Synapse model, NESTML
@@ -100,6 +100,16 @@ class WMModel:
             #print("Used parameters: ", self.network_params)
         else:
             raise TypeError("network_spec must be a dict.")
+        
+        self.simulation_params = deepcopy(default_simulation_params)
+        if isinstance(sim_spec, dict):
+            print("Initializing simulation with custom parameters.")
+            check_params(sim_spec, self.simulation_params)
+            self.simulation_custom_params = sim_spec
+            update_params(self.simulation_params, self.simulation_custom_params)
+            #print("Used parameters: ", self.simulation_params)
+        else:
+            raise TypeError("sim_spec must be a dict.")
         
         self.simulation_params = deepcopy(default_simulation_params)
         if isinstance(sim_spec, dict):
@@ -604,6 +614,47 @@ class WMModel:
 
         #print option to be implemented
         more_print = False
+
+        #definition of the weight and standard deviations variables
+        J_p_pA = get_weight(self.network_params["syn_params"]["J_p"], self.network_params["neur_params"]["tau"][0])
+        std_p_pA = get_weight(self.network_params["syn_params"]["Jp_normal_dist"]["std"], self.network_params["neur_params"]["tau"][0])
+        
+        J_b_pA = get_weight(self.network_params["syn_params"]["J_b"], self.network_params["neur_params"]["tau"][0])
+        std_b_pA = get_weight(self.network_params["syn_params"]["Jb_normal_dist"]["std"], self.network_params["neur_params"]["tau"][0])
+
+        #definition of u and x initial values and their standard deviations
+        u0_mean = self.network_params["stp_params"]["u0"]
+        u0_std = self.network_params["stp_params"]["u0_normal_dist"]["std"]
+        x0_mean = self.network_params["stp_params"]["x0"]
+        #parameters for the truncated distribution of u
+        my_start = 0
+        my_stop = 1 
+        start, stop = (my_start - u0_mean) / u0_std, (my_stop - u0_mean) / u0_std
+
+        #definition of tau_F and tau_D mean value and their standard deviations
+        tauF_mean = self.network_params["stp_params"]["tau_F"]
+        tauF_std = self.network_params["stp_params"]["tauF_normal_dist"]["std"]
+        tauD_mean = self.network_params["stp_params"]["tau_D"]
+        tauD_std = self.network_params["stp_params"]["tauD_normal_dist"]["std"]
+        #parameters for the truncated distribution of tau_f
+        my_start_tau = 1
+        my_stop_tau = 6000
+        start_tauf, stop_tauf = (my_start_tau - tauF_mean) / tauF_std, (my_stop_tau - tauF_mean) / tauF_std
+        #parameters for the truncated distribution of tau_d
+        start_taud, stop_taud = (my_start_tau - tauD_mean) / tauD_std, (my_stop_tau - tauD_mean) / tauD_std
+
+         #Not facilitated case
+        mean_time_constant = (tauD_mean + tauF_mean)/2
+        std_time_constant = 50 #ms
+
+        #Setting the seed for the truncated normal distribution
+        seed_truncnorm = np.random.seed(seed=self.simulation_params["master_seed"])
+        #truncnorm.rvs(start, stop, loc=u0_mean, scale=u0_std, size=int(self.f*self.c*self.network_params["N_exc"]*(facil_frac)), random_state = seed_truncnorm)
+        #truncnorm.rvs(start, stop, loc=u0_mean, scale=u0_std, size=int(self.f*self.c*self.network_params["N_exc"]*(1.0-facil_frac)), random_state = seed_truncnorm)
+        #Fraction of facilitated synapses
+        facil_frac = self.network_params["syn_params"]["facil_frac"]
+        print(self.network_params["stp_params"]["tauD_normal_dist"]["allow"])
+
         print("Connecting the neuron populations...", end = ' ')
         for i in range(self.p):
             if more_print:
@@ -612,28 +663,63 @@ class WMModel:
             for j in range(self.p):
                 if more_print:
                     print("\tSource: selective population ", j+1)
-                con_dict = {'rule': 'fixed_indegree', 
-                            'indegree': int(self.f*self.c*self.network_params["N_exc"]),
-                            'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
                 if i==j:
+                    # Facilitated Fraction of synapse between same selective populations
+                    con_dict = {'rule': 'fixed_indegree', 
+                            'indegree': int(self.f*self.c*self.network_params["N_exc"]*facil_frac),
+                            'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                    
                     syn_dict = {"synapse_model": 'stp_synapse',
-                                "weight": get_weight(self.network_params["syn_params"]["J_p"], self.network_params["neur_params"]["tau"][0]),
+                                "weight": nest.random.normal(mean = J_p_pA, std = std_p_pA) if self.network_params["syn_params"]["Jp_normal_dist"]["allow"] else J_p_pA,
                                 "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
-                                "tau_rec": self.network_params["stp_params"]["tau_D"],
-                                "tau_fac": self.network_params["stp_params"]["tau_F"],
+                                "tau_rec": [truncnorm.rvs(start_taud, stop_taud, loc=tauD_mean, scale=tauD_std, size=int(self.f*self.c*self.network_params["N_exc"]*facil_frac), random_state = seed_truncnorm) for i in range(len(self.exc_populations[i]))] if self.network_params["stp_params"]["tauD_normal_dist"]["allow"] else tauD_mean,
+                                "tau_fac": [truncnorm.rvs(start_tauf, stop_tauf, loc=tauF_mean, scale=tauF_std, size=int(self.f*self.c*self.network_params["N_exc"]*facil_frac), random_state = seed_truncnorm) for i in range(len(self.exc_populations[i]))] if self.network_params["stp_params"]["tauF_normal_dist"]["allow"] else tauF_mean,
                                 "U": self.network_params["stp_params"]["U"],
-                                "u": self.network_params["stp_params"]["u0"],
-                                "x": self.network_params["stp_params"]["x0"]}
+                                "u": [truncnorm.rvs(start, stop, loc=u0_mean, scale=u0_std, size=int(self.f*self.c*self.network_params["N_exc"]*(facil_frac)), random_state = seed_truncnorm) for i in range(len(self.exc_populations[i]))] if self.network_params["stp_params"]["u0_normal_dist"]["allow"] else u0_mean,
+                                "x": nest.random.uniform(min = my_start, max = my_stop) if self.network_params["stp_params"]["x0_uniform_dist"]["allow"] else x0_mean}
+                    nest.Connect(self.exc_populations[j], self.exc_populations[i], con_dict, syn_dict)
+                    #Not facilitated fraction of synapse between same selective populations
+                    con_dict = {'rule': 'fixed_indegree', 
+                            'indegree': int(self.f*self.c*self.network_params["N_exc"]*(1.0-facil_frac)),
+                            'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                    
+                    syn_dict = {"synapse_model": "stp_synapse",
+                                "weight": nest.random.normal(mean = J_p_pA, std = std_p_pA) if self.network_params["syn_params"]["Jp_normal_dist"]["allow"] else J_p_pA,
+                                "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                                "tau_rec": nest.random.normal(mean = mean_time_constant, std = std_time_constant) if self.network_params["stp_params"]["tauD_normal_dist"]["allow"] else mean_time_constant,
+                                "tau_fac": nest.random.normal(mean = mean_time_constant, std = std_time_constant) if self.network_params["stp_params"]["tauD_normal_dist"]["allow"] else mean_time_constant,
+                                "U": self.network_params["stp_params"]["U"],
+                                "u": [truncnorm.rvs(start, stop, loc=u0_mean, scale=u0_std, size=int(self.f*self.c*self.network_params["N_exc"]*(1.0-facil_frac)), random_state = seed_truncnorm) for i in range(len(self.exc_populations[i]))] if self.network_params["stp_params"]["u0_normal_dist"]["allow"] and facil_frac != 1.0 else u0_mean,
+                                "x": nest.random.uniform(min = my_start, max = my_stop) if self.network_params["stp_params"]["x0_uniform_dist"]["allow"] else x0_mean}
                     nest.Connect(self.exc_populations[j], self.exc_populations[i], con_dict, syn_dict)
                 else:
-                    syn_dict = {"synapse_model": 'stp_synapse',
-                                "weight": get_weight(self.network_params["syn_params"]["J_b"], self.network_params["neur_params"]["tau"][0]),
+                    # Facilitated Fraction of synapse between different selective populations
+                    con_dict = {'rule': 'fixed_indegree', 
+                            'indegree': int(self.f*self.c*self.network_params["N_exc"]*facil_frac),
+                            'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+                
+                    syn_dict = {"synapse_model": "stp_synapse",
+                                "weight": nest.random.normal(mean = J_b_pA, std = std_b_pA) if self.network_params["syn_params"]["Jb_normal_dist"]["allow"] else J_b_pA,
                                 "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
-                                "tau_rec": self.network_params["stp_params"]["tau_D"],
-                                "tau_fac": self.network_params["stp_params"]["tau_F"],
+                                "tau_rec": [truncnorm.rvs(start_taud, stop_taud, loc=tauD_mean, scale=tauD_std, size=int(self.f*self.c*self.network_params["N_exc"]*facil_frac), random_state = seed_truncnorm) for i in range(len(self.exc_populations[i]))] if self.network_params["stp_params"]["tauD_normal_dist"]["allow"] else tauD_mean,
+                                "tau_fac": [truncnorm.rvs(start_tauf, stop_tauf, loc=tauF_mean, scale=tauF_std, size=int(self.f*self.c*self.network_params["N_exc"]*facil_frac), random_state = seed_truncnorm) for i in range(len(self.exc_populations[i]))] if self.network_params["stp_params"]["tauF_normal_dist"]["allow"] else tauF_mean,
                                 "U": self.network_params["stp_params"]["U"],
-                                "u": self.network_params["stp_params"]["u0"],
-                                "x": self.network_params["stp_params"]["x0"]}
+                                "u": [truncnorm.rvs(start, stop, loc=u0_mean, scale=u0_std, size=int(self.f*self.c*self.network_params["N_exc"]*(facil_frac)), random_state = seed_truncnorm) for i in range(len(self.exc_populations[i]))] if self.network_params["stp_params"]["u0_normal_dist"]["allow"] else u0_mean,
+                                "x": nest.random.uniform(min = my_start, max = my_stop) if self.network_params["stp_params"]["x0_uniform_dist"]["allow"] else x0_mean}
+                    nest.Connect(self.exc_populations[j], self.exc_populations[i], con_dict, syn_dict)
+                    #Not facilitated fraction of synapse between different selective populations
+                    con_dict = {'rule': 'fixed_indegree', 
+                            'indegree': int(self.f*self.c*self.network_params["N_exc"]*(1.0-facil_frac)),
+                            'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
+
+                    syn_dict = {"synapse_model": "stp_synapse",
+                                "weight": nest.random.normal(mean = J_b_pA, std = std_b_pA) if self.network_params["syn_params"]["Jb_normal_dist"]["allow"] else J_b_pA,
+                                "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
+                                "tau_rec": nest.random.normal(mean = mean_time_constant, std = std_time_constant) if self.network_params["stp_params"]["tauD_normal_dist"]["allow"] else mean_time_constant,
+                                "tau_fac": nest.random.normal(mean = mean_time_constant, std = std_time_constant) if self.network_params["stp_params"]["tauD_normal_dist"]["allow"] else mean_time_constant,
+                                "U": self.network_params["stp_params"]["U"],
+                                "u": [truncnorm.rvs(start, stop, loc=u0_mean, scale=u0_std, size=int(self.f*self.c*self.network_params["N_exc"]*(1.0-facil_frac)), random_state = seed_truncnorm) for i in range(len(self.exc_populations[i]))] if self.network_params["stp_params"]["u0_normal_dist"]["allow"] and facil_frac != 1.0 else u0_mean,
+                                "x": nest.random.uniform(min = my_start, max = my_stop) if self.network_params["stp_params"]["x0_uniform_dist"]["allow"] else x0_mean}
                     nest.Connect(self.exc_populations[j], self.exc_populations[i], con_dict, syn_dict)
             
             # indegrees from the other exc neurons
@@ -642,25 +728,25 @@ class WMModel:
             con_dict = {'rule': 'fixed_indegree', 'indegree': int((1.0-self.network_params["syn_params"]["gamma_0"])*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
                         'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
             syn_dict = {"synapse_model": 'stp_synapse',
-                        "weight": get_weight(self.network_params["syn_params"]["J_b"], self.network_params["neur_params"]["tau"][0]),
+                        "weight": J_b_pA,
                         "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
-                        "tau_rec": self.network_params["stp_params"]["tau_D"],
-                        "tau_fac": self.network_params["stp_params"]["tau_F"],
+                        "tau_rec": tauD_mean,
+                        "tau_fac": tauF_mean,
                         "U": self.network_params["stp_params"]["U"],
-                        "u": self.network_params["stp_params"]["u0"],
-                        "x": self.network_params["stp_params"]["x0"]}
+                        "u": u0_mean,
+                        "x": x0_mean}
             nest.Connect(self.exc_populations[-1], self.exc_populations[i], con_dict, syn_dict)
 
             con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.network_params["syn_params"]["gamma_0"]*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
                         'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
             syn_dict = {"synapse_model": 'stp_synapse',
-                        "weight": get_weight(self.network_params["syn_params"]["J_p"], self.network_params["neur_params"]["tau"][0]),
+                        "weight": J_p_pA,
                         "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
-                        "tau_rec": self.network_params["stp_params"]["tau_D"],
-                        "tau_fac": self.network_params["stp_params"]["tau_F"],
+                        "tau_rec": tauD_mean,
+                        "tau_fac": tauF_mean,
                         "U": self.network_params["stp_params"]["U"],
-                        "u": self.network_params["stp_params"]["u0"],
-                        "x": self.network_params["stp_params"]["x0"]}
+                        "u": u0_mean,
+                        "x": x0_mean}
             nest.Connect(self.exc_populations[-1], self.exc_populations[i], con_dict, syn_dict)
 
             # indegrees from the inh pop
@@ -708,9 +794,6 @@ class WMModel:
         nest.Connect(self.inh_population, self.inh_population, con_dict, syn_dict)
 
         # connection for the non-specific exc population
-
-        
-
         if more_print:
             print("\nTarget: non-specific excitatory population")
         # indegrees from the selective populations
@@ -720,13 +803,13 @@ class WMModel:
             con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.f*self.c*self.network_params["N_exc"]),
                         'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
             syn_dict = {"synapse_model": 'stp_synapse',
-                        "weight": get_weight(self.network_params["syn_params"]["J_b"], self.network_params["neur_params"]["tau"][0]),
+                        "weight": J_b_pA,
                         "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
-                        "tau_rec": self.network_params["stp_params"]["tau_D"],
-                        "tau_fac": self.network_params["stp_params"]["tau_F"],
+                        "tau_rec": tauD_mean,
+                        "tau_fac": tauF_mean,
                         "U": self.network_params["stp_params"]["U"],
-                        "u": self.network_params["stp_params"]["u0"],
-                        "x": self.network_params["stp_params"]["x0"]}
+                        "u": u0_mean,
+                        "x": x0_mean}
             nest.Connect(self.exc_populations[i], self.exc_populations[-1], con_dict, syn_dict)
 
         # indegrees from the rest of the exc pop
@@ -735,25 +818,25 @@ class WMModel:
         con_dict = {'rule': 'fixed_indegree', 'indegree': int((1.0-self.network_params["syn_params"]["gamma_0"])*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
                     'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
         syn_dict = {"synapse_model": 'stp_synapse',
-                    "weight": get_weight(self.network_params["syn_params"]["J_b"], self.network_params["neur_params"]["tau"][0]),
+                    "weight": J_b_pA,
                     "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
-                    "tau_rec": self.network_params["stp_params"]["tau_D"],
-                    "tau_fac": self.network_params["stp_params"]["tau_F"],
+                    "tau_rec": tauD_mean,
+                    "tau_fac": tauF_mean,
                     "U": self.network_params["stp_params"]["U"],
-                    "u": self.network_params["stp_params"]["u0"],
-                    "x": self.network_params["stp_params"]["x0"]}
+                    "u": u0_mean,
+                    "x": x0_mean}
         nest.Connect(self.exc_populations[-1], self.exc_populations[-1], con_dict, syn_dict)
 
         con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.network_params["syn_params"]["gamma_0"]*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
                     'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
         syn_dict = {"synapse_model": 'stp_synapse',
-                    "weight": get_weight(self.network_params["syn_params"]["J_p"], self.network_params["neur_params"]["tau"][0]),
+                    "weight": J_p_pA,
                     "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
-                    "tau_rec": self.network_params["stp_params"]["tau_D"],
-                    "tau_fac": self.network_params["stp_params"]["tau_F"],
+                    "tau_rec": tauD_mean,
+                    "tau_fac": tauF_mean,
                     "U": self.network_params["stp_params"]["U"],
-                    "u": self.network_params["stp_params"]["u0"],
-                    "x": self.network_params["stp_params"]["x0"]}
+                    "u": u0_mean,
+                    "x": x0_mean}
         nest.Connect(self.exc_populations[-1], self.exc_populations[-1], con_dict, syn_dict)
 
         # indegrees from the inh pop
@@ -852,79 +935,57 @@ class WMModel:
     def simulate_network(self):
         """
         Network simulation. If STP params are not recorded the network is simply simulated.
-        Otherwise the simulation proceeds in steps in order to record STP params.
+        Otherwise, before the simulation, STP parameters are recorded.
 
         """
         print("\n### NETWORK SIMULATION ###")
 
-        if(self.simulation_params["recording_params"]["stp_recording"]==False):
-            t0 = time.time()
-            nest.Simulate(self.simulation_params["t_sim"])
-            t1 = time.time()
-            print("Network simulated in {} s.".format(t1-t0))
-        else:
-            nest.SetKernelStatus({"print_time" : False})
-            t0 = 0.0
-            t_rec = 0.0
-            record_interval = self.simulation_params["recording_params"]["stp_record_interval"]
-            self.sim_steps = np.arange(record_interval, self.simulation_params["t_sim"]+record_interval, record_interval)
-            for s in range(len(self.sim_steps)):
-                print("\nStep {}/{} ({} s / {} s)".format(s+1, len(self.sim_steps), self.sim_steps[s], self.sim_steps[-1]))
-                dum_start = time.time()
-                nest.Simulate(record_interval)
-                t0 += time.time() - dum_start
-                dum_start = time.time()
-                self.record_std_params(dt = self.sim_steps[s])
-                t_rec +=  time.time() - dum_start
+        # synaptic params recording BEFORE the simulation starts
+        # the STP variables will be computed basing on the spiketimes recorded
+        if(self.simulation_params["recording_params"]["stp_recording"]==True):
+            # we have to simulate the time in which no spikes are recorded first
+            # otherwise, we cannot compute the real STP values using the spiketimes
+            nest.Simulate(self.simulation_params["recording_params"]["spike_recording_params"]["start"])
+            # now we can record
             dum_start = time.time()
-            self.merge_std_data()
-            t_rec +=  time.time() - dum_start
+            print("\nExtracting STP params...", end = ' ')
+            # fraction of neurons for each population to record STP variables from,,
+            dum = int(self.network_params["N_exc"]*self.f*self.simulation_params["recording_params"]["stp_fraction_recorded"])
+            # loop on the populations from which we have to record the STP variables from
+            source = []; target = []; x = []; u = []; weight = []; tau_D = []; tau_F = []
+            for npop in self.simulation_params["recording_params"]["stp_pop_recorded"]:
+                neuronpop = self.exc_populations[npop][0:dum]
+                conn = nest.GetConnections(synapse_model="stp_synapse", source=neuronpop)
+                source = conn.get("source")
+                target = conn.get("target")
+                weight = conn.get("weight")
+                x = conn.get("x")
+                u = conn.get("u")
+                tau_F = conn.get("tau_fac")
+                tau_D = conn.get("tau_rec")
+                dataset = {"source": source, "target": target, "weight": weight, "x": x, "u": u, "tau_F": tau_F, "tau_D": tau_D}
+                data = pd.DataFrame(dataset)
+                data.to_csv(self.simulation_params['data_path'] +"stp_params/"+ "stp_pop_"+str(npop)+".csv", index=False)
+            # naive way to free a bit of memory
+            source = []; target = []; x = []; u = []; weight = []; tau_D = []; tau_F = []
+            dataset = {}
+            print("Done")
+            t_rec =  time.time() - dum_start
+
+            print("Starting the simulation...")
+            dum_start = time.time()
+            nest.Simulate(self.simulation_params["t_sim"]-self.simulation_params["recording_params"]["spike_recording_params"]["start"])
+            t_sim = time.time() - dum_start
             print("\nRecording of STP params in {} s.".format(t_rec))
-            print("Network simulated in {} s.".format(t0))
-            print("Overall simulation took {} s.".format(t0+t_rec))
+            print("Network simulated in {} s.".format(t_sim))
+            print("Overall simulation took {} s.".format(t_sim+t_rec))
+        else:
+            print("Starting the simulation...")
+            dum_start = time.time()
+            nest.Simulate(self.simulation_params["t_sim"])
+            t_sim = time.time() - dum_start
+            print("Network simulated in {} s.".format(t_sim))
 
-
-    def record_std_params(self, dt = 0.0):
-        """
-        Recording function for the STP params. It is possible to record a fraction of the neuron population.
-        Only a synapse per neuron is recorded since the STP parameters are the same for all the synapses of the neuron.
-
-        Returns a csv file for every simulation step in the folder 'data_path/stp_params'
-        """
-        print("\nExtracting stp params...", end = ' ')
-        start = time.time()
-        dum = int(self.network_params["N_exc"]*self.f*self.simulation_params["recording_params"]["stp_fraction_recorded"])
-        for npop in self.simulation_params["recording_params"]["stp_pop_recorded"]:
-            neuronpop = self.exc_populations[npop][0:dum]
-            x = []; u = []; target = []; source = []; t = []; t_lastspike =[]
-            for i in range(dum):
-                conn = nest.GetConnections(synapse_model='stp_synapse', source=neuronpop[i])[0]
-                x.append(conn.get("x"))
-                u.append(conn.get("u"))
-                target.append(conn.get("target"))
-                source.append(conn.get("source"))
-                t.append(dt)
-                t_lastspike.append(nest.GetStatus(neuronpop[i], "t_spike")[0])
-            dataset = {"time": t, "source": source, "target": target, "x": x, "u": u, "t_last_spike": t_lastspike}
-            data = pd.DataFrame(dataset)
-            data.to_csv(self.simulation_params['data_path'] +"stp_params/"+ "stp_pop_"+str(npop)+"_"+str(int(dt))+".csv", index=False)
-        
-        stop = time.time()
-        print("Done in {} s: ".format(stop-start))
-    
-
-    def merge_std_data(self):
-        """
-        Merges the STD csv files that are produced for every step into a single csv file per selective population recorded.
-        Finally removes the old csv data.
-
-        """
-        for npop in self.simulation_params["recording_params"]["stp_pop_recorded"]:
-            csvlist = [self.simulation_params['data_path'] +"stp_params/"+ "stp_pop_"+str(npop)+"_"+str(int(self.sim_steps[s]))+".csv" for s in range(len(self.sim_steps))]
-            df = pd.concat(map(pd.read_csv, csvlist), ignore_index=True)
-            df.to_csv(self.simulation_params['data_path'] +"stp_params/"+"stp_params_tot_"+str(npop)+".csv")
-            [os.remove(oldcsv) for oldcsv in csvlist]
-            
 
     def raster_plot(self):
         """
@@ -974,6 +1035,3 @@ class WMModel:
         if(self.simulation_params["recording_params"]["save_to_file"]==True):
             plt.savefig(self.simulation_params['data_path'] + "raster_plot.png", format='png')
         plt.draw()
-    
-
-

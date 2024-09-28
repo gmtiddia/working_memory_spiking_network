@@ -1,6 +1,20 @@
 from model.model import WMModel
 import matplotlib.pyplot as plt
 import os
+from argparse import ArgumentParser
+
+# Get and check path and rng seed
+parser = ArgumentParser()
+parser.add_argument("--path", type=str, default=None, help='Path for the simulation output (default: data).')
+parser.add_argument("--seed", type=int, default=143202461, help='Seed for random number generation (default: 143202461).')
+parser.add_argument("--std", type=float, default=0.1, help='Standard deviation for the Jp normal distribution (default: 0.1).')
+parser.add_argument("--facil_frac", type=float, default=1.0, help='Fraction of facilitated synapses (default: 1.0).')
+args = parser.parse_args()
+
+if args.path is None:
+    data_path = os.path.join(os.getcwd(), 'data/')
+else:
+    data_path = os.path.join(os.getcwd(), args.path+"/")
 
 # Script needed to run the model.
 # Please choose the values of average external currents and the starting value of u
@@ -21,9 +35,14 @@ network_p = {
     'eta_exc': eta_exc,
     # current used to go back to the spontaneous activity
     'eta_exc_end': 22.7 - eta_exc,
-    'stp_params' : {'u0': u_start, 'tau_F': 1500.0, 'tau_D': 200.0},
-    'syn_params' : {'autapses' : True, 'multapses' : True}}
-
+    'stp_params' : {'u0': u_start, 'tau_F': 1500.0, 'tau_D': 200.0, 
+                    'u0_normal_dist' : {'allow' : False, 'std' : 0.06},
+                    'x0_uniform_dist' : {'allow' : False},
+                    'tauF_normal_dist' : {'allow' : False, 'std' : 200},
+                    'tauD_normal_dist' : {'allow' : False, 'std' : 20}},
+    'syn_params' : {'autapses' : True, 'multapses' : False, 'Jp_normal_dist' : {'allow' : False, 'std' : 0.15},
+                    'Jb_normal_dist' : {'allow' : False, 'std' : 0.05},
+                    'facil_frac' : 1.0}}
 
 # presimulation time (i.e. time in which the network stays in the spontaneous activity)
 tpresim = 3000.0
@@ -34,7 +53,9 @@ tsim = 3000.0
 # here add the parameters to be edited. The rest of the parameters are in default_params.py
 simulation_p = {
     # path to data
-    "data_path" : os.path.join(os.getcwd(), 'data/'),
+    "data_path" : data_path,
+    # master seed
+    "master_seed" : 143202463,
     # number of OpenMP threads
     "threads" : 8,
     # overall simulation time
@@ -50,13 +71,13 @@ simulation_p = {
         # save spike data to file
         "save_to_file" : True,
         # save STP data to file
-        "stp_recording" : False,
+        "stp_recording" : True,
         # recording step for STP recording [ms]
         "stp_record_interval" : 10.0,
         # selective population for which the STP params (i.e. x, u) will be recorded
         "stp_pop_recorded" : [0, 1],
         # fraction of the selective population to be recorded for stp data
-        "stp_fraction_recorded" : 1.0
+        "stp_fraction_recorded" : 0.1
     }
 }
 
@@ -102,4 +123,4 @@ network.simulate_network()
 network.save_spike_data()
 # plots a raster plot of all the neurons recorded
 network.raster_plot()
-plt.show()
+#plt.show()

@@ -1,0 +1,10 @@
+/home/luca/Desktop/working_memory_spiking_network-hetero_stp_params/model/target/CMakeFiles/dist.dir
+/home/luca/Desktop/working_memory_spiking_network-hetero_stp_params/model/target/CMakeFiles/nestml_9e705219b8bb4368bcf3212f6c6fb118_module_module.dir
+/home/luca/Desktop/working_memory_spiking_network-hetero_stp_params/model/target/CMakeFiles/package.dir
+/home/luca/Desktop/working_memory_spiking_network-hetero_stp_params/model/target/CMakeFiles/package_source.dir
+/home/luca/Desktop/working_memory_spiking_network-hetero_stp_params/model/target/CMakeFiles/edit_cache.dir
+/home/luca/Desktop/working_memory_spiking_network-hetero_stp_params/model/target/CMakeFiles/rebuild_cache.dir
+/home/luca/Desktop/working_memory_spiking_network-hetero_stp_params/model/target/CMakeFiles/list_install_components.dir
+/home/luca/Desktop/working_memory_spiking_network-hetero_stp_params/model/target/CMakeFiles/install.dir
+/home/luca/Desktop/working_memory_spiking_network-hetero_stp_params/model/target/CMakeFiles/install/local.dir
+/home/luca/Desktop/working_memory_spiking_network-hetero_stp_params/model/target/CMakeFiles/install/strip.dir

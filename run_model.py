@@ -33,7 +33,7 @@ u_start = 0.19
 network_p = {
     # excitatory input current [mV]
     'eta_exc': eta_exc,
-    'poisson_bkg':{'allow': True},
+    'poisson_bkg':{'allow': False},
     # current used to go back to the spontaneous activity
     'eta_exc_end': 22.7 - eta_exc,
     'stp_params' : {'u0': u_start, 'tau_F': 1500.0, 'tau_D': 200.0, 
@@ -56,7 +56,8 @@ simulation_p = {
     # path to data
     "data_path" : data_path,
     # master seed
-    "master_seed" : 143202463,
+    #"master_seed" : 143202463,
+    "master_seed" : 143202461,
     # number of OpenMP threads
     "threads" : 8,
     # overall simulation time

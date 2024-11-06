@@ -737,7 +737,7 @@ class WMModel:
                                 "tau_rec": [truncnorm.rvs(start_taud, stop_taud, loc=tauD_mean, scale=tauD_std, size=int(self.f*self.c*self.network_params["N_exc"]*facil_frac), random_state = seed_truncnorm) for i in range(len(self.exc_populations[i]))] if self.network_params["stp_params"]["tauD_normal_dist"]["allow"] else tauD_mean,
                                 "tau_fac": [truncnorm.rvs(start_tauf, stop_tauf, loc=tauF_mean, scale=tauF_std, size=int(self.f*self.c*self.network_params["N_exc"]*facil_frac), random_state = seed_truncnorm) for i in range(len(self.exc_populations[i]))] if self.network_params["stp_params"]["tauF_normal_dist"]["allow"] else tauF_mean,
                                 "U": self.network_params["stp_params"]["U"],
-                                "u": [truncnorm.rvs(start, stop, loc=u0_mean, scale=u0_std, size=int(self.f*self.c*self.network_params["N_exc"]*(facil_frac)), random_state = seed_truncnorm) for i in range(len(self.exc_populations[i]))] if self.network_params["stp_params"]["u0_normal_dist"]["allow"] else u0_mean,
+                                "u": [truncnorm.rvs(start, stop, loc=u0_mean, scale=u0_std, size=int(self.f*self.c*self.network_params["N_exc"]*facil_frac), random_state = seed_truncnorm) for i in range(len(self.exc_populations[i]))] if self.network_params["stp_params"]["u0_normal_dist"]["allow"] else u0_mean,
                                 "x": nest.random.uniform(min = my_start, max = my_stop) if self.network_params["stp_params"]["x0_uniform_dist"]["allow"] else x0_mean}
                     nest.Connect(self.exc_populations[j], self.exc_populations[i], con_dict, syn_dict)
                     #Not facilitated fraction of synapse between same selective populations
@@ -790,25 +790,25 @@ class WMModel:
             con_dict = {'rule': 'fixed_indegree', 'indegree': int((1.0-self.network_params["syn_params"]["gamma_0"])*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
                         'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
             syn_dict = {"synapse_model": 'stp_synapse',
-                        "weight": J_b_pA,
+                        "weight": nest.random.normal(mean = J_b_pA, std = std_b_pA) if self.network_params["syn_params"]["Jb_normal_dist"]["allow"] else J_b_pA,
                         "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
                         "tau_rec": tauD_mean,
                         "tau_fac": tauF_mean,
                         "U": self.network_params["stp_params"]["U"],
-                        "u": u0_mean,
-                        "x": x0_mean}
+                        "u": [truncnorm.rvs(start, stop, loc=u0_mean, scale=u0_std, size=int((1.0-self.network_params["syn_params"]["gamma_0"])*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]), random_state = seed_truncnorm) for i in range(len(self.exc_populations[i]))] if self.network_params["stp_params"]["u0_normal_dist"]["allow"] else u0_mean,
+                        "x": nest.random.uniform(min = my_start, max = my_stop) if self.network_params["stp_params"]["x0_uniform_dist"]["allow"] else x0_mean}
             nest.Connect(self.exc_populations[-1], self.exc_populations[i], con_dict, syn_dict)
 
             con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.network_params["syn_params"]["gamma_0"]*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
                         'allow_autapses': self.network_params["syn_params"]["autapses"], 'allow_multapses': self.network_params["syn_params"]["multapses"]}
             syn_dict = {"synapse_model": 'stp_synapse',
-                        "weight": J_p_pA,
+                        "weight": nest.random.normal(mean = J_p_pA, std = std_p_pA) if self.network_params["syn_params"]["Jp_normal_dist"]["allow"] else J_p_pA,
                         "delay": nest.random.uniform(min=self.network_params["syn_params"]["delay"][0], max=self.network_params["syn_params"]["delay"][1]),
                         "tau_rec": tauD_mean,
                         "tau_fac": tauF_mean,
                         "U": self.network_params["stp_params"]["U"],
-                        "u": u0_mean,
-                        "x": x0_mean}
+                        "u": [truncnorm.rvs(start, stop, loc=u0_mean, scale=u0_std, size=int(self.network_params["syn_params"]["gamma_0"]*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]), random_state = seed_truncnorm) for i in range(len(self.exc_populations[i]))] if self.network_params["stp_params"]["u0_normal_dist"]["allow"] else u0_mean,
+                        "x": nest.random.uniform(min = my_start, max = my_stop) if self.network_params["stp_params"]["x0_uniform_dist"]["allow"] else x0_mean}
             nest.Connect(self.exc_populations[-1], self.exc_populations[i], con_dict, syn_dict)
 
             # indegrees from the inh pop
@@ -870,8 +870,8 @@ class WMModel:
                         "tau_rec": tauD_mean,
                         "tau_fac": tauF_mean,
                         "U": self.network_params["stp_params"]["U"],
-                        "u": u0_mean,
-                        "x": x0_mean}
+                        "u": [truncnorm.rvs(start, stop, loc=u0_mean, scale=u0_std, size=int(self.f*self.c*self.network_params["N_exc"]), random_state = seed_truncnorm) for i in range(len(self.exc_populations[-1]))] if self.network_params["stp_params"]["u0_normal_dist"]["allow"] else u0_mean,
+                        "x": nest.random.uniform(min = my_start, max = my_stop) if self.network_params["stp_params"]["x0_uniform_dist"]["allow"] else x0_mean}
             nest.Connect(self.exc_populations[i], self.exc_populations[-1], con_dict, syn_dict)
 
         # indegrees from the rest of the exc pop
@@ -885,8 +885,8 @@ class WMModel:
                     "tau_rec": tauD_mean,
                     "tau_fac": tauF_mean,
                     "U": self.network_params["stp_params"]["U"],
-                    "u": u0_mean,
-                    "x": x0_mean}
+                    "u": [truncnorm.rvs(start, stop, loc=u0_mean, scale=u0_std, size=int((1.0-self.network_params["syn_params"]["gamma_0"])*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]), random_state = seed_truncnorm) for i in range(len(self.exc_populations[-1]))] if self.network_params["stp_params"]["u0_normal_dist"]["allow"] else u0_mean,
+                    "x": nest.random.uniform(min = my_start, max = my_stop) if self.network_params["stp_params"]["x0_uniform_dist"]["allow"] else x0_mean}
         nest.Connect(self.exc_populations[-1], self.exc_populations[-1], con_dict, syn_dict)
 
         con_dict = {'rule': 'fixed_indegree', 'indegree': int(self.network_params["syn_params"]["gamma_0"]*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]),
@@ -897,8 +897,8 @@ class WMModel:
                     "tau_rec": tauD_mean,
                     "tau_fac": tauF_mean,
                     "U": self.network_params["stp_params"]["U"],
-                    "u": u0_mean,
-                    "x": x0_mean}
+                    "u": [truncnorm.rvs(start, stop, loc=u0_mean, scale=u0_std, size=int(self.network_params["syn_params"]["gamma_0"]*self.c*(1.0-self.f*self.p)*self.network_params["N_exc"]), random_state = seed_truncnorm) for i in range(len(self.exc_populations[-1]))] if self.network_params["stp_params"]["u0_normal_dist"]["allow"] else u0_mean,
+                    "x": nest.random.uniform(min = my_start, max = my_stop) if self.network_params["stp_params"]["x0_uniform_dist"]["allow"] else x0_mean}
         nest.Connect(self.exc_populations[-1], self.exc_populations[-1], con_dict, syn_dict)
 
         # indegrees from the inh pop

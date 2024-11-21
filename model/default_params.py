@@ -49,7 +49,7 @@ default_neur_params = {
     # spike emission threshold [mV]
     "V_th": [20.0, 20.0],
     # reset potential [mV]
-    "V_reset": [16.0, 13.0],
+    "V_reset": [0.0, 0.0],
     #"V_reset": [16.0, 13.0], 
     # membrane time constant [ms]
     "tau": [15.0, 10.0],

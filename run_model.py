@@ -1,5 +1,4 @@
 from model.model import WMModel
-import matplotlib.pyplot as plt
 import os
 from argparse import ArgumentParser
 
@@ -25,7 +24,7 @@ else:
 # Fig 2C - 24.1  - 0.19 (bi-stable activity with asynchronous spiking activity)
 
 # average variation of membrane potential elicited by external current [mV]
-eta_exc = 23.7
+eta_exc = 22.7
 # short-term plasticity variable u at the beginning of the simulation
 u_start = 0.19
 # network params dict
@@ -40,7 +39,7 @@ network_p = {
                     'u0_normal_dist' : {'allow' : True, 'std' : 0.04},
                     'x0_uniform_dist' : {'allow' : True},
                     'tauF_normal_dist' : {'allow' : False, 'std' : 200},
-                    'tauD_normal_dist' : {'allow' : False, 'std' : 20}},
+                    'tauD_normal_dist' : {'allow' : False, 'std' : 100}},
     'syn_params' : {'autapses' : True, 'multapses' : False, 'Jp_normal_dist' : {'allow' : False, 'std' : 0.15},
                     'Jb_normal_dist' : {'allow' : False, 'std' : 0.05},
                     'facil_frac' : 1.0}}
@@ -74,8 +73,6 @@ simulation_p = {
         "save_to_file" : True,
         # save STP data to file
         "stp_recording" : True,
-        # recording step for STP recording [ms]
-        "stp_record_interval" : 10.0,
         # selective population for which the STP params (i.e. x, u) will be recorded
         "stp_pop_recorded" : [0, 1],
         # fraction of the selective population to be recorded for stp data

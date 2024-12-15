@@ -10,7 +10,6 @@ working memory model by Mongillo et al. (2018).
 import numpy as np
 import random
 import matplotlib.pyplot as plt
-from matplotlib import gridspec
 import nest
 import os
 import shutil
@@ -26,7 +25,7 @@ from model.model_helpers import get_weight, noise_params, get_rate_and_weight_po
 from scipy.stats import truncnorm
 
 
-# Synapse model, NESTML
+# STP synapse model, NESTML
 
 stp_synapse= """
 # Synapse model of STP with NESTML
@@ -73,21 +72,18 @@ module_name, synapse_model_name = \
 
 
 class WMModel:
-    def __init__(self, network_spec, sim_spec):
+    def __init__(self, network_spec:dict, sim_spec:dict):
         """
         Working Memory Model class.
         An instance of the model with the given parameters.
 
-        Parameters
-        ----------
-        network_spec : dict
-            Specify the network to be simulated. The parameters defined
-            in the dictionary overwrite the default parameters defined in
-            default_params.py.
-        sim_spec : dict
-            Specify simulation and recording parameters. The parameters defined
-            in the dictionary overwrite the default parameters defined in
-            default_params.py.
+        Args:
+            network_spec (dict): specifies the network to be simulated. The parameters defined
+                in the dictionary overwrite the default parameters defined in
+                default_params.py.
+            sim_spec (dict): specifies simulation and recording parameters. The parameters defined
+                in the dictionary overwrite the default parameters defined in
+                default_params.py.
             
         """
         # dictionaries set up
@@ -145,16 +141,19 @@ class WMModel:
         
 
     def print_params(self):
+        """
+        Prints the dictionaries of network and simulations parameters.
+
+        """
         print("Network parameters dict:", self.network_params)
         print("Simulation parameters dict:", self.simulation_params)
 
 
     def save_params(self):
         """
-        Save network and simulation dicts in json files.
+        Saves network and simulation dicts in json files.
 
         """
-
         print("Writing dict params to file...", end = " ")
         with open(self.simulation_params['data_path'] + "network_params.json", 'w') as fp:
             json.dump(self.network_params, fp)
@@ -166,7 +165,7 @@ class WMModel:
 
     def save_spike_data(self):
         """
-        Save spike data in files named 'spikedataX.dat' where X is the pop recorded id
+        Saves spike data in files named 'spikedataX.dat' where X is the pop recorded id
         (i.e. the id of the excitatory selective sub-population)
 
         """
@@ -179,16 +178,13 @@ class WMModel:
                 np.savetxt(self.simulation_params['data_path'] + fn, spikes)
 
 
-    def add_background_input(self, start=0.0, stop=1000.0, origin = 1000.0):
+    def add_background_input(self, start:float=0.0, stop:float=1000.0):
         """
         Add backround input to the network using the parameters previously given.
 
-        Parameters
-        ----------
-        start : float
-            Specify the stimulus start (in ms).
-        stop : float
-            Specify the stimulus stop (in ms).
+        Args:
+            start (float): stimulus start (in ms).
+            stop (float): stimulus stop (in ms).
 
         """
 
@@ -202,21 +198,23 @@ class WMModel:
         self.network_params.update({'background_input': background_input})
 
 
-    def add_item_loading_signals(self, pop_id=[0], origin=[1000.0]):
+    def add_item_loading_signals(self, pop_id:list=[0], origin:list=[1000.0]):
         """
         Add item loading signal to the pop_id-th excitatory population using the parameters previously given.
 
-        Parameters
-        ----------
-            pop_id : list of int
-                The population to which the items are loaded
-            origin : list of float
-                The origin of the item loading stimulations (in ms)
+        Args:
+            pop_id (list of int): population ID to which the items are loaded.
+            origin (list of float): the origin of the item loading stimulations (in ms).
 
         """
 
-        if len(pop_id) != len(origin):
+        if(len(pop_id) != len(origin)):
             raise ValueError("pop_id and origin must have the same dimension.")
+        if(not all(isinstance(x, int) for x in pop_id)):
+            raise TypeError("List must contain only integers.")
+        if(not all(isinstance(x, float) for x in origin)):
+            raise TypeError("List must contain only floats.")
+
         else:
             item_loading = {
                 'nstim': len(pop_id) ,
@@ -231,16 +229,17 @@ class WMModel:
             print("Item loaded to sub-population {} at {} ms.".format(pop_id[i], origin[i]))
         
 
-    def add_nonspecific_readout_signal(self, origin = [2000.0]):
+    def add_nonspecific_readout_signal(self, origin:list=[2000.0]):
         """
         Add nonspecific readout signal to the whole excitatory population using the parameters previously given.
 
-        Parameters
-        ----------
-            origin : list of float
-                The origin of the nonspecific stimulations (in ms)
+        Args:
+            origin (list of float): the origin of the nonspecific stimulations (in ms).
 
         """
+
+        if(not all(isinstance(x, float) for x in origin)):
+            raise TypeError("List must contain only floats.")
 
         nonspecific_readout_signal = {
             'nstim' : len(origin),
@@ -255,17 +254,21 @@ class WMModel:
             print("Nonspecific readout signal added at {} ms.".format(origin[i]))
 
 
-    def add_random_nonspecific_noise(self, origin = [1500.0], frac = 0.15):
+    def add_random_nonspecific_noise(self, origin:list=[1500.0], frac:float=0.15):
         """
         Add random nonspecific noise signal to a fraction of the excitatory population using the parameters previously given.
 
-        Parameters
+        Args:
             origin : list of float
                 The origin of the item loading stimulations (in ms).
             frac : float
                 Fraction of excitatory neurons simulated by the stimulus.
 
         """
+        
+        if(not all(isinstance(x, float) for x in origin)):
+            raise TypeError("List must contain only floats.")
+
         nonspecific_noise = {
             'nstim' : len(origin),
             'origin': origin,
@@ -279,14 +282,18 @@ class WMModel:
         self.network_params.update({'nonspecific_noise': nonspecific_noise})
 
     
-    def add_periodic_sequence(self, intervals = [[1000.0, 1500.0]]):
+    def add_periodic_sequence(self, intervals:list=[[1000.0, 1500.0]]):
         """
         Add nonspecific signal-like periodic sequence to the excitatory population. 
         Similar to the nonspecific readout signal, it is shorter in time.
 
-        Parameters
-            times : list containing the beginning of each periodic stimuli
+        Args
+            intervals : list containing the beginning and the end of each periodic stimuli
+            in list form. The times muct be floats.
         """
+
+        if not all(isinstance(x, float) for sublist in intervals for x in sublist):
+            raise TypeError("All elements must be floats.")
 
         times = []
         for i in range(len(intervals)):
@@ -324,7 +331,6 @@ class WMModel:
                             "delay": 1.0,})
 
     
-
     def create_populations(self):
         """
         Creates neuron populations.
@@ -404,14 +410,8 @@ class WMModel:
         """
         Computes the non-specific background input for the network.
 
-        Returns exc_bkg_input and inh_bkg_input, lists containing respectively:
-        ----------
-        exc_bkg_input
-            ng_exc_E : Node
-                excitatory noise for exc pop
-        inh_bkg_input
-            ng_exc_I : Node
-                excitatory noise for inh pop
+        Returns exc_bkg_input and inh_bkg_input, lists containing respectively
+        the stimulation devices for excitatory and inhibitory populations.
 
         """
 
@@ -457,10 +457,6 @@ class WMModel:
                                     "start" : start,
                                     "stop" : stop})
 
-        #print("\nBKG to inh pop")
-        #print("I EXC [pA]: {:.2f} +/- {:.2f}".format(mean_I_ext_exc, stdI_ext_exc))
-        #print("I INH [pA]: {:.2f} +/- {:.2f}".format(-mean_I_ext_inh, stdI_ext_inh))
-
         mean_I_ext_exc_end, stdI_ext_exc_end = noise_params(eta_exc_end, 0.0, self.network_params["neur_params"]["tau"][1], dt=self.network_params["stimulation_params"]["dt_external_stim"])
 
         ng_offset = nest.Create("noise_generator")
@@ -469,7 +465,6 @@ class WMModel:
                                   "dt" : self.network_params["stimulation_params"]["dt_external_stim"],
                                   "origin" : self.simulation_params["eta_end_origin"]})
 
-        #print(ng_exc_E)
         self.exc_bkg_input = ng_exc_E
         self.inh_bkg_input = ng_inh_I
         self.exc_offset = ng_offset
@@ -527,7 +522,6 @@ class WMModel:
         # create the stimulus
         for i in range(self.network_params["nonspecific_readout_signals"]["nstim"]):
             
-            #if(self.network_params["poisson_bkg"]["allow"]):
             if(self.network_params["poisson_bkg"]["allow"]):
                 cue, std_cue = noise_params(eta_exc*(self.network_params["stimulation_params"]["A_reac"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
                 rate_cue, _ = get_rate_and_weight_poisson(eta_exc*(self.network_params["stimulation_params"]["A_reac"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
@@ -556,7 +550,8 @@ class WMModel:
         """
         Creation of the noisy input injected in a subset of the excitatory neurons
 
-        Returns the list random_noise contaning the nonspecific noise signal injected into a fraction of the excitatory neurons.
+        Returns the list random_noise contaning the nonspecific noise signal 
+        injected into a fraction of the excitatory neurons.
 
         """
 
@@ -649,7 +644,7 @@ class WMModel:
     
     def create_recording_devices(self):
         """
-        Creation of the recording devices (i.e. spike recorders)
+        Creation of the recording devices (i.e. spike recorders).
 
         """
 
@@ -956,8 +951,6 @@ class WMModel:
         nest.Connect(self.exc_offset, self.exc_population, syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
 
         # item loading connection
-        #self.item_loading_signals
-
         for i in range(self.network_params["item_loading"]["nstim"]):
             if(self.network_params["poisson_bkg"]["allow"]):
                 _, weight_cue_loading= get_rate_and_weight_poisson(eta_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
@@ -1024,11 +1017,9 @@ class WMModel:
 
         """
         print("Connecting recording devices...", end = ' ')
-        #self.spike_recorders
         for i in range(len(self.spike_recorders)):
             pop_id = self.simulation_params["recording_params"]["pop_recorded"][i]
             N_neurons_recorded = int(self.network_params["N_exc"]*self.f*self.simulation_params["recording_params"]["fraction_pop_recorded"])
-            #print(self.exc_populations[pop_id][0:N_neurons_recorded])
             nest.Connect(self.exc_populations[pop_id][0:N_neurons_recorded], self.spike_recorders[i])
 
         print("Done")

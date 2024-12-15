@@ -22,7 +22,7 @@ from copy import deepcopy
 from pynestml.codegeneration.nest_code_generator_utils import NESTCodeGeneratorUtils
 from model.default_params import default_network_params, default_simulation_params
 from model.default_params import update_params, check_params
-from model.model_helpers import get_weight, noise_params, rate_poisson, get_weight_poisson
+from model.model_helpers import get_weight, noise_params, get_rate_and_weight_poisson
 from scipy.stats import truncnorm
 
 
@@ -426,14 +426,14 @@ class WMModel:
 
         if(self.network_params["poisson_bkg"]["allow"]):
             mean_I_ext_exc, stdI_ext_exc = noise_params(eta_exc, Sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
-            rate_ex = rate_poisson(eta_exc, Sigma_exc, self.network_params["neur_params"]["tau"][0])
+            rate_ex, _ = get_rate_and_weight_poisson(eta_exc, Sigma_exc, self.network_params["neur_params"]["tau"][0])
             ng_exc_E = nest.Create("poisson_generator")
             nest.SetStatus(ng_exc_E, {"rate" : rate_ex,
                                   "start" : start,
                                   "stop" : stop})
 
             mean_I_ext_inh, stdI_ext_inh = noise_params(eta_inh, Sigma_inh, self.network_params["neur_params"]["tau"][1], dt=self.network_params["stimulation_params"]["dt_external_stim"])
-            rate_in = rate_poisson(eta_inh, Sigma_inh, self.network_params["neur_params"]["tau"][1])
+            rate_in, _ = get_rate_and_weight_poisson(eta_inh, Sigma_inh, self.network_params["neur_params"]["tau"][1])
             ng_inh_I = nest.Create("poisson_generator")
             nest.SetStatus(ng_inh_I, {"rate" : rate_in,
                                   "start" : start,
@@ -491,7 +491,7 @@ class WMModel:
 
         for item in range(self.network_params["item_loading"]["nstim"]):
             cue, std_cue = noise_params(eta_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
-            rate_cue = rate_poisson(eta_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
+            rate_cue, _ = get_rate_and_weight_poisson(eta_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
             if(self.network_params["poisson_bkg"]["allow"]):
                 I_cue = nest.Create("poisson_generator")
                 nest.SetStatus(I_cue, {"rate" : rate_cue,
@@ -530,7 +530,7 @@ class WMModel:
             #if(self.network_params["poisson_bkg"]["allow"]):
             if(self.network_params["poisson_bkg"]["allow"]):
                 cue, std_cue = noise_params(eta_exc*(self.network_params["stimulation_params"]["A_reac"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0], dt=self.network_params["stimulation_params"]["dt_external_stim"])
-                rate_cue= rate_poisson(eta_exc*(self.network_params["stimulation_params"]["A_reac"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
+                rate_cue, _ = get_rate_and_weight_poisson(eta_exc*(self.network_params["stimulation_params"]["A_reac"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
                 
                 I_cue = nest.Create("poisson_generator")
                 nest.SetStatus(I_cue, {"rate" : rate_cue,
@@ -569,7 +569,7 @@ class WMModel:
         for i in range(self.network_params["nonspecific_noise"]["nstim"]):
         # create the stimulus
             if(self.network_params["poisson_bkg"]["allow"]):
-                rate_cue=rate_poisson(eta_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
+                rate_cue, _ = get_rate_and_weight_poisson(eta_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
                 I_noise = nest.Create("poisson_generator")
                 nest.SetStatus(I_noise, {"rate" : rate_cue,
                                     "origin" : origin[i],
@@ -607,7 +607,7 @@ class WMModel:
         if(self.network_params["poisson_bkg"]["allow"]):
             for i in range(len(times)):
             # create the stimulus
-                    rate_poisson_seq = rate_poisson(eta_exc*(self.network_params["stimulation_params"]["A_period_reac"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
+                    rate_poisson_seq, _ = get_rate_and_weight_poisson(eta_exc*(self.network_params["stimulation_params"]["A_period_reac"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
                     I_nspec_signal = nest.Create("noise_generator")
                     nest.SetStatus(I_nspec_signal, {"rate" : rate_poisson_seq,
                                             "origin" : times[i],
@@ -945,8 +945,8 @@ class WMModel:
             eta_inh = self.network_params["eta_inh"]
             Sigma_exc = self.network_params["Sigma_exc"]
             Sigma_inh = self.network_params["Sigma_inh"]
-            weight_ex = get_weight_poisson(eta_exc,Sigma_exc, self.network_params["neur_params"]["tau"][0])
-            weight_in = get_weight_poisson(eta_inh,Sigma_inh, self.network_params["neur_params"]["tau"][1])
+            _, weight_ex = get_rate_and_weight_poisson(eta_exc,Sigma_exc, self.network_params["neur_params"]["tau"][0])
+            _, weight_in = get_rate_and_weight_poisson(eta_inh,Sigma_inh, self.network_params["neur_params"]["tau"][1])
             nest.Connect(self.exc_bkg_input, self.exc_population, syn_spec={"weight":weight_ex,"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
             nest.Connect(self.inh_bkg_input, self.inh_population, syn_spec={"weight":weight_in,"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
         else:
@@ -960,7 +960,7 @@ class WMModel:
 
         for i in range(self.network_params["item_loading"]["nstim"]):
             if(self.network_params["poisson_bkg"]["allow"]):
-                weight_cue_loading= get_weight_poisson(eta_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
+                _, weight_cue_loading= get_rate_and_weight_poisson(eta_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
 
                 nest.Connect(self.item_loading_signals[i], self.exc_populations[self.network_params["item_loading"]["pop_id"][i]], 
                             #syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
@@ -977,7 +977,7 @@ class WMModel:
             for i in range(self.network_params["nonspecific_readout_signals"]["nstim"]):
                 if(self.network_params["poisson_bkg"]["allow"]):
 
-                    weight_cue_non_specific = get_weight_poisson(eta_exc*(self.network_params["stimulation_params"]["A_reac"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
+                    _, weight_cue_non_specific = get_rate_and_weight_poisson(eta_exc*(self.network_params["stimulation_params"]["A_reac"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
                     nest.Connect(self.nonspecific_readout_signals[i], self.exc_population, 
                                 #syn_spec={"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
                                 syn_spec={"weight":weight_cue_non_specific,"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])})
@@ -992,7 +992,7 @@ class WMModel:
             syn_dict = {"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])}
             if(self.network_params["poisson_bkg"]["allow"]):
                 for i in range(self.network_params["nonspecific_noise"]["nstim"]):
-                    weight_poisson= get_weight_poisson(eta_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
+                    _, weight_poisson = get_rate_and_weight_poisson(eta_exc*(self.network_params["stimulation_params"]["A_cue"]-1.0), Sigma_exc, self.network_params["neur_params"]["tau"][0])
                     syn_dict = {"weight":weight_poisson,"delay": nest.random.uniform(min=self.network_params["syn_params"]["delay_ext"][0], max=self.network_params["syn_params"]["delay_ext"][1])}
 
                     nest.Connect(self.random_noise[i], self.exc_population, con_dict, syn_dict)

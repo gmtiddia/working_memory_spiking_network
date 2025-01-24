@@ -88,9 +88,9 @@ default_syn_params = {
     # possibility of having multiple connections within two neurons
     "multapses" : True, 
     # adds the possibility to have a normal distribution for J_p (absolute weight for potentiated synapses)
-    "Jp_normal_dist" : {"allow" : False, "std" : 0.1},
+    "Jp_lognormal_dist" : {"allow" : False, "std" : 0.1},
     # adds the possibility to have a normal distribution for J_b (absolute weight for baseline synapses)
-    "Jb_normal_dist" : {"allow" : False, "std" : 0.05},
+    "Jb_lognormal_dist" : {"allow" : False, "std" : 0.05},
     # fraction of facilitaded synapses randomly distributed across the connections between differend and same selective populations
     "facil_frac" : 1.0}
 

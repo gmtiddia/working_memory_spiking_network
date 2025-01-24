@@ -45,6 +45,7 @@ def noise_params(mu_ext:float, sigma_ext:float, tau_m:float, dt:float=0.1, C_m:f
 
     return (C_m / tau_m) * mu_ext, math.sqrt(2/(tau_m*dt))*C_m*sigma_ext
 
+
 def get_rate_and_weight_poisson(eta:float, Sigma:float, tau_m:float, tau_syn:float=2.0, C_m:float=250., dt:float=0.1):
     """Returns the rate and the synaptic weight of a Poisson process able to elicit a depolarization of the membrane 
     designed as a Gaussian white noise.
@@ -64,8 +65,16 @@ def get_rate_and_weight_poisson(eta:float, Sigma:float, tau_m:float, tau_syn:flo
     mu, sigma = noise_params(eta, Sigma, tau_m, dt, C_m)
     rate = (tau_m*mu/C_m)**2 /(2*(tau_m+tau_syn))
     weight = mu/(rate*tau_syn)
+
+    print("Rate = {} Hz".format(rate*1000))
+
     return rate*1000, weight
 
+
+def lognormal_params(mean:float, std:float):
+    std_normal = math.sqrt(math.log((std / mean) ** 2 + 1.0))
+    mean_normal = math.log(mean * math.exp(-(std_normal ** 2) / 2.0))
+    return(mean_normal, std_normal)
 
 
 

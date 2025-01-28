@@ -1,6 +1,6 @@
-<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/25.0.2 Chrome/128.0.6613.186 Electron/32.2.5 Safari/537.36" version="25.0.2">
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.0.4 Chrome/128.0.6613.186 Electron/32.2.5 Safari/537.36" version="26.0.4">
   <diagram name="Page-1" id="ZsS8TT7sXqw9gh6G_kml">
-    <mxGraphModel dx="683" dy="382" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="1" shadow="0">
+    <mxGraphModel dx="803" dy="479" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="1" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -195,31 +195,31 @@
         <mxCell id="JuswtGPYq_lBfHKUDTyH-8" value="&lt;div&gt;\(K_{\text{in}}, A, M\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="195" y="216" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="JuswtGPYq_lBfHKUDTyH-9" value="&lt;div&gt;\(\bar{J_{\text{p}}}, d \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#595289;" parent="1" vertex="1">
+        <mxCell id="JuswtGPYq_lBfHKUDTyH-9" value="&lt;div&gt;\(J_{\text{p}}, \delta \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="195" y="231" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="JuswtGPYq_lBfHKUDTyH-12" value="&lt;div&gt;\(K_{\text{in}}, A, M\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="195" y="342" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="JuswtGPYq_lBfHKUDTyH-13" value="&lt;div&gt;\(\bar{J_{\text{p}}}, d \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#595289;" parent="1" vertex="1">
+        <mxCell id="JuswtGPYq_lBfHKUDTyH-13" value="&lt;div&gt;\(J_{\text{p}}, \delta \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="195" y="358" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="JuswtGPYq_lBfHKUDTyH-14" value="&lt;div&gt;\(K_{\text{in}}, A, M\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="485" y="216" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="JuswtGPYq_lBfHKUDTyH-15" value="&lt;div&gt;\(\bar{J_{\text{b}}}, d \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#595289;" parent="1" vertex="1">
+        <mxCell id="JuswtGPYq_lBfHKUDTyH-15" value="&lt;div&gt;\(J_{\text{b}}, \delta \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="485" y="231" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="JuswtGPYq_lBfHKUDTyH-16" value="&lt;div&gt;\(K_{\text{in}}, M\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="333" y="237" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="JuswtGPYq_lBfHKUDTyH-17" value="&lt;div&gt;\(\bar{J_{\text{b}}}, d \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#595289;" parent="1" vertex="1">
+        <mxCell id="JuswtGPYq_lBfHKUDTyH-17" value="&lt;div&gt;\(J_{\text{b}}, \delta \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="334" y="254" width="60" height="24" as="geometry" />
         </mxCell>
         <mxCell id="JuswtGPYq_lBfHKUDTyH-18" value="&lt;div&gt;\(K_{\text{in}}, M\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=-31;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="288" y="340" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="JuswtGPYq_lBfHKUDTyH-19" value="&lt;div&gt;\(\bar{J_{\text{b}}}, d \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=-30;fontColor=#595289;" parent="1" vertex="1">
+        <mxCell id="JuswtGPYq_lBfHKUDTyH-19" value="&lt;div&gt;\(J_{\text{b}}, \delta \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=-30;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="296" y="351" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="JuswtGPYq_lBfHKUDTyH-23" value="" style="edgeStyle=none;orthogonalLoop=1;jettySize=auto;html=1;rounded=0;endArrow=block;endFill=1;strokeColor=#000000;fontColor=#000000;" parent="1" edge="1">
@@ -229,59 +229,62 @@
             <Array as="points" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="JuswtGPYq_lBfHKUDTyH-25" value="&lt;div&gt;\(\delta, \bar{J}_{\text{ext}}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=0;fontColor=#000000;" parent="1" vertex="1">
+        <mxCell id="JuswtGPYq_lBfHKUDTyH-25" value="&lt;div&gt;\(\delta \sim \mathcal{D}, \bar{J}_{\text{ext}}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=0;fontColor=#000000;" parent="1" vertex="1">
           <mxGeometry x="334" y="467" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="JuswtGPYq_lBfHKUDTyH-26" value="&lt;div&gt;\(K_{\text{in}}, M\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=-90;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="235" y="312" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="JuswtGPYq_lBfHKUDTyH-27" value="&lt;div&gt;\(\bar{J_{\text{b}}}, d \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=-90;fontColor=#595289;" parent="1" vertex="1">
+        <mxCell id="JuswtGPYq_lBfHKUDTyH-27" value="&lt;div&gt;\(J_{\text{b}}, \delta \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=-90;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="255" y="312" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="MXekh4K5R61OvtHbPwRA-2" value="&lt;div&gt;\(\delta, \bar{J}_{\text{cue}}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=0;fontColor=#000000;" parent="1" vertex="1">
-          <mxGeometry x="100" y="330" width="86" height="37" as="geometry" />
+        <mxCell id="MXekh4K5R61OvtHbPwRA-2" value="&lt;div&gt;\(\delta \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=0;fontColor=#000000;" parent="1" vertex="1">
+          <mxGeometry x="100" y="331.5" width="86" height="37" as="geometry" />
         </mxCell>
         <mxCell id="MXekh4K5R61OvtHbPwRA-3" value="&lt;div&gt;\(K_{\text{in}}, A, M\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#af143c;" parent="1" vertex="1">
           <mxGeometry x="495" y="316" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="MXekh4K5R61OvtHbPwRA-4" value="&lt;div&gt;\(\bar{J_{\text{II}}}, d \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#af143c;" parent="1" vertex="1">
+        <mxCell id="MXekh4K5R61OvtHbPwRA-4" value="&lt;div&gt;\(\bar{J_{\text{II}}}, \delta \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#af143c;" parent="1" vertex="1">
           <mxGeometry x="495" y="329" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="MXekh4K5R61OvtHbPwRA-5" value="&lt;div&gt;\(K_{\text{in}}, M\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="364" y="403" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="MXekh4K5R61OvtHbPwRA-6" value="&lt;div&gt;\(\bar{J_{\text{IE}}}, d \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#595289;" parent="1" vertex="1">
+        <mxCell id="MXekh4K5R61OvtHbPwRA-6" value="&lt;div&gt;\(\bar{J_{\text{IE}}}, \delta \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="365" y="417" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="MXekh4K5R61OvtHbPwRA-7" value="&lt;div&gt;\(K_{\text{in}}, M\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=35;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="360" y="335" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="MXekh4K5R61OvtHbPwRA-8" value="&lt;div&gt;\(\bar{J_{\text{IE}}}, d \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=37;fontColor=#595289;" parent="1" vertex="1">
+        <mxCell id="MXekh4K5R61OvtHbPwRA-8" value="&lt;div&gt;\(\bar{J_{\text{IE}}}, \delta \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=37;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="355" y="348" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="MXekh4K5R61OvtHbPwRA-9" value="&lt;div&gt;\(K_{\text{in}}, M\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=-90;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="437" y="309" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="MXekh4K5R61OvtHbPwRA-10" value="&lt;div&gt;\(\bar{J_{\text{IE}}}, d \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=-90;fontColor=#595289;" parent="1" vertex="1">
+        <mxCell id="MXekh4K5R61OvtHbPwRA-10" value="&lt;div&gt;\(\bar{J_{\text{IE}}}, \delta \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=-90;fontColor=#595289;" parent="1" vertex="1">
           <mxGeometry x="451" y="309" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="MXekh4K5R61OvtHbPwRA-11" value="&lt;div&gt;\(K_{\text{in}}, M\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=35;fontColor=#af143c;" parent="1" vertex="1">
           <mxGeometry x="322" y="280" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="MXekh4K5R61OvtHbPwRA-12" value="&lt;div&gt;\(\bar{J_{\text{EI}}}, d \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=37;fontColor=#af143c;" parent="1" vertex="1">
+        <mxCell id="MXekh4K5R61OvtHbPwRA-12" value="&lt;div&gt;\(\bar{J_{\text{EI}}}, \delta \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=37;fontColor=#af143c;" parent="1" vertex="1">
           <mxGeometry x="316" y="293" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="MXekh4K5R61OvtHbPwRA-13" value="&lt;div&gt;\(K_{\text{in}}, M\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#af143c;" parent="1" vertex="1">
           <mxGeometry x="306" y="378" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="MXekh4K5R61OvtHbPwRA-14" value="&lt;div&gt;\(\bar{J_{\text{EI}}}, d \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#af143c;" parent="1" vertex="1">
+        <mxCell id="MXekh4K5R61OvtHbPwRA-14" value="&lt;div&gt;\(\bar{J_{\text{EI}}}, \delta \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;fontColor=#af143c;" parent="1" vertex="1">
           <mxGeometry x="307" y="392" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="MXekh4K5R61OvtHbPwRA-15" value="&lt;div&gt;\(K_{\text{in}}, M\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=-90;fontColor=#af143c;" parent="1" vertex="1">
           <mxGeometry x="407" y="310" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="MXekh4K5R61OvtHbPwRA-16" value="&lt;div&gt;\(\bar{J_{\text{EI}}}, d \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=-90;fontColor=#af143c;" parent="1" vertex="1">
+        <mxCell id="MXekh4K5R61OvtHbPwRA-16" value="&lt;div&gt;\(\bar{J_{\text{EI}}}, \delta \sim \mathcal{D}\)&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=7;rotation=-90;fontColor=#af143c;" parent="1" vertex="1">
           <mxGeometry x="421" y="310" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="JVRqSUxgBdFuNiPIuZdk-1" value="&lt;span style=&quot;font-size: 7px;&quot;&gt;\(\bar{J}_{\text{cue}}\)&lt;/span&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="113" y="350" width="60" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

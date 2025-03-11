@@ -702,7 +702,7 @@ class WMModel:
         start_taud, stop_taud = (my_start_tau - tauD_mean) / tauD_std, (my_stop_tau - tauD_mean) / tauD_std
 
          #Not facilitated case
-        mean_time_constant = (tauD_mean + tauF_mean)/2
+        mean_time_constant = 325 #ms from Wang
         std_time_constant = 50 #ms
 
         #Setting the seed for the truncated normal distribution

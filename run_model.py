@@ -38,11 +38,11 @@ network_p = {
     'stp_params' : {'u0': u_start, 'tau_F': 1500.0, 'tau_D': 200.0, 
                     'u0_normal_dist' : {'allow' : True, 'std' : 0.04},
                     'x0_uniform_dist' : {'allow' : True},
-                    'tauF_normal_dist' : {'allow' : False, 'std' : 200},
-                    'tauD_normal_dist' : {'allow' : False, 'std' : 100}},
-    'syn_params' : {'autapses' : True, 'multapses' : False, 'Jp_lognormal_dist' : {'allow' : True, 'std' : 0.05},
-                    'Jb_lognormal_dist' : {'allow' : True, 'std' : 0.05},
-                    'facil_frac' : 1.0}}
+                    'tauF_normal_dist' : {'allow' : True, 'std' : 150},
+                    'tauD_normal_dist' : {'allow' : True, 'std' : 20}},
+    'syn_params' : {'autapses' : True, 'multapses' : False,  'Jp_lognormal_dist' : {'allow' : True, 'std' : 0.36},
+                    'Jb_lognormal_dist' : {'allow' : True, 'std' : 0.08},
+                    'facil_frac' : 0.9}}
 
 # presimulation time (i.e. time in which the network stays in the spontaneous activity)
 tpresim = 3000.0
@@ -72,7 +72,7 @@ simulation_p = {
         # save spike data to file
         "save_to_file" : True,
         # save STP data to file
-        "stp_recording" : False,
+        "stp_recording" : True,
         # selective population for which the STP params (i.e. x, u) will be recorded
         "stp_pop_recorded" : [0, 1],
         # fraction of the selective population to be recorded for stp data

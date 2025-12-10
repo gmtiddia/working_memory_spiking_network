@@ -1,10 +1,12 @@
-# working_memory_spiking_network
+# Working Memory spiking network model sustained by short-term facilitation
 
-Spiking network model and analysis scripts for the publication:
+Spiking network model for the publications:
 
 > Tiddia, G., Golosio, B., Fanti, V., & Paolucci, P. S. (2022). Simulations of working memory spiking networks driven by short-term plasticity. Frontiers in Integrative Neuroscience, 16, 972055. https://doi.org/10.3389/fnint.2022.972055
 
-If you use the code, cite us using the citation above.
+> Tiddia G, Sergi L, Rubiu S, Incollu A, & Golosio B. Short-term plasticity-based working memory spiking model is resilient to synaptic heterogeneity. In review.
+
+If you use the code, please cite us using the citations above.
 
 # Requirements
 To run the model you need both [NEST 3.X](https://github.com/nest/nest-simulator) and [NESTML](https://github.com/nest/nestml) installed. For installation instructions, follow the guides for [NEST](https://nest-simulator.readthedocs.io/en/stable/installation/index.html) and [NESTML](https://nestml.readthedocs.io/en/latest/installation.html).
@@ -23,12 +25,10 @@ Additionally, to run the model and analyze the data, Python and additional packa
     - [model.py](model/model.py) introduces the class ``WMModel`` which initializes the model. The script contains all the functions employed to build the model and configure its inputs.
 
 - The [test_synapse_model](test_synapse_model/) directory contains the Python scripts needed to compare the different tsodyks_synapse implementations. In particular:
-    - ```evaluate_tsodyks3_synapse.py``` is based on the NEST example ```evaluate_tsodyks2_synapse.py```, which compares the postsynaptic potentials of two neurons connected to the presynaptic one using two different synaptic models: ```tsodyks_synapse``` and ```tsodyks2_synapse```. In this script, an additional neuron connected using the STP synapse created through NESTML is simulated, and the postsynaptic potentials given by the three synaptic models are saved to a file.
-    - ```plot_tsodyks3_evaluation.py``` takes in input the output file of the previous script to produce Figure S5 of the Supplementary Material.
+    - ```evaluate_tsodyks_synapse_implementation.py``` is based on the NEST example ```evaluate_tsodyks2_synapse.py```, which compares the postsynaptic potentials of two neurons connected to the presynaptic one using two different synaptic models: ```tsodyks_synapse``` and ```tsodyks2_synapse```. In this script, an additional neuron connected using the STP synapse created through NESTML is simulated, and the postsynaptic potentials given by the three synaptic models are saved to a file.
+    - ```plot_synmodels_evaluation.py``` takes in input the output file of the previous script to produce Figure S5 of the Supplementary Material.
 
-- [run_model.py](run_model.py) simulates the model. In lines [19](run_model.py#L19) and [35](run_model.py#L35), the custom network and the simulation parameters are defined. Not all the parameters should be reported at this stage. The parameters not indicated in these dictionaries that have to be used by the model are taken from [default_params.py](model/default_params.py). In line [64](run_model.py#L64) the model is initialized, and in the following lines, the input is added to the network to reproduce the data of different figures of the publication. After the simulation, a ``data`` directory is returned containing the spike times of the selective populations of the model.
-
-- [analysis.py](analysis.py) reproduces the plots shown in the publication. To reproduce the data edit line [509](analysis.py#L509) of the script with the path in which the data is stored and edit lines [536](analysis.py#L536) and [538](analysis.py#L538) to specify which figure (2 and 3) and panel (A, B, or C) you want to reproduce from the publication.
+- [run_model.py](run_model.py) simulates the model. After the simulation, a ``data`` directory is returned containing the spike times of the selective populations of the model.
 
 
 # Data reproducibility
@@ -39,8 +39,14 @@ The original implementation of the publication
 
 is available at the [v_tiddia2022](https://github.com/gmtiddia/working_memory_spiking_network/releases/tag/v_tiddia2022) tag. In order for this version of the model to be run, the NEST version of [this repository](https://github.com/gmtiddia/nest-simulator-3.1) is required. It is derived from the [NEST 3.1 version](https://github.com/nest/nest-simulator/tree/3.1-develop), with the addition of the ``tsodyks3_synapse`` model, not present in the standard version of the library. For the installation instructions, follow [this guide](https://nest-simulator.readthedocs.io/en/v3.1/installation/linux_install.html). We verified that the simulations employing the ``tsodyks3_synapse`` model and the NESTML model produce the sam eresults. You can use the scripts contained in [test_synapse_model/comparison_tsodyks3_NESTML](test_synapse_model/comparison_tsodyks3_NESTML/) directory to compare the two implementations.
 
+
+The current repository enables the eterogeneity of the synaptic parameters and an improved reproducibility thanks to the NESTML implementation of synaptic model, as discussed in
+
+> Tiddia G, Sergi L, Rubiu S, Incollu A, & Golosio B. Short-term plasticity-based working memory spiking model is resilient to synaptic heterogeneity. In review.
+
 # Contact
 Gianmarco Tiddia, Istituto Nazionale di Fisica Nucleare, Sezione di Cagliari, Italy, gianmarco.tiddia@dsf.unica.it
+Luca Sergi, Physics department, University of Cagliari, Italy, lsergi@dsf.unica.it
 
 # License
 GPL 3.0 [license](LICENSE).

@@ -62,7 +62,7 @@ def get_rate_and_weight_poisson(eta:float, Sigma:float, tau_m:float, tau_syn:flo
         rate: rate of the Poisson process.
         weight: the synaptic weight modulated as a function of the Poisson process rate
     """
-    mu, sigma = noise_params(eta, Sigma, tau_m, dt, C_m)
+    mu, _ = noise_params(eta, Sigma, tau_m, dt, C_m)
     rate = (tau_m*mu/C_m)**2 /(2*(tau_m+tau_syn))
     weight = mu/(rate*tau_syn)
 
@@ -72,8 +72,22 @@ def get_rate_and_weight_poisson(eta:float, Sigma:float, tau_m:float, tau_syn:flo
 
 
 def lognormal_params(mean:float, std:float):
+    """Convert the mean and standard deviation of a lognormal distribution
+    to the parameters of its underlying normal distribution.
+
+    Args:
+        mean (float): mean of the lognormal distribution.
+        std (float): standard deviation of the lognormal distribution.
+
+    Returns:
+        mean_normal: mean of the underlying normal distribution ln(X).
+        std_normal: standard deviation of the underlying normal distribution ln(X).
+
+    """
+
     std_normal = math.sqrt(math.log((std / mean) ** 2 + 1.0))
     mean_normal = math.log(mean * math.exp(-(std_normal ** 2) / 2.0))
+
     return(mean_normal, std_normal)
 
 

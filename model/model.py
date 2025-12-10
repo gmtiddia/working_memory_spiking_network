@@ -25,7 +25,7 @@ from model.model_helpers import get_weight, noise_params, get_rate_and_weight_po
 from scipy.stats import truncnorm
 
 
-# STP synapse model, NESTML
+# STP synapse model implemented with NESTML
 
 stp_synapse= """
 # Synapse model of STP with NESTML
@@ -67,9 +67,6 @@ module_name, synapse_model_name = \
         NESTCodeGeneratorUtils.generate_code_for(stp_synapse,
                                                 codegen_opts={"delay_variable": {"stp_synapse": "delay"},
                                                             "weight_variable": {"stp_synapse": "w"}})
-
-
-
 
 class WMModel:
     def __init__(self, network_spec:dict, sim_spec:dict):
@@ -1155,3 +1152,4 @@ class WMModel:
         if(self.simulation_params["recording_params"]["save_to_file"]==True):
             plt.savefig(self.simulation_params['data_path'] + "raster_plot.png", format='png')
         plt.draw()
+        

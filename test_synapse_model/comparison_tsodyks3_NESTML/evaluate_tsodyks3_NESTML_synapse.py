@@ -1,10 +1,20 @@
 """
-Example of the tsodyks3_synapse in NEST
----------------------------------------
+Example of the NESTML Tsodyks synapse in NEST
+---------------------------------------------
 
 This example is based on the NEST example evaluate_tsodyks2_synapse.
-Here, an additional postsynaptic neuron is simulated and connected
-to the presynaptic neuron using the tsodyks3_synapse model.
+Here, two additional postsynaptic neurons are simulated and connected
+to the presynaptic neuron using the tsodyks3_synapse model implemented
+in NEST 3.1 used in [1] and the NESTML implementation
+of the tsodyks3_synapse used in [2].
+
+[1] Tiddia G, Golosio B, Fanti V and Paolucci PS (2022) Simulations of 
+working memory spiking networks driven by short-term plasticity. 
+Front. Integr. Neurosci. 16:972055. doi: 10.3389/fnint.2022.972055
+
+[2] Tiddia G, Sergi L, Rubiu S, Incollu A and Golosio B
+Short-term plasticity-based working memory spiking model is resilient 
+to synaptic heterogeneity. In review.
 
 """
 
@@ -73,13 +83,14 @@ fac_params3 = {"U": 0.2, "u": 0.2, 'x': 1.0, "tau_fac": 1500.,
 
 tsodyks_params = dict(fac_params, synapse_model="tsodyks_synapse")     # for tsodyks_synapse
 tsodyks2_params = dict(fac_params2, synapse_model="tsodyks2_synapse")  # for tsodyks2_synapse
+tsodyks3_params = dict(fac_params3, synapse_model="tsodyks3_synapse")  # for tsodyks3_synapse
 
 nest.CopyModel(synapse_model_name, "stp_synapse", fac_params3)
 
 ###############################################################################
 # Create three neurons.
 
-neuron = nest.Create("iaf_psc_exp", 4, params={"tau_syn_ex": 2.})
+neuron = nest.Create("iaf_psc_exp", 5, params={"tau_syn_ex": 2.})
 
 ###############################################################################
 # Neuron one produces spikes. Neurons 2, 3 and 4 receive the spikes via the
@@ -87,13 +98,14 @@ neuron = nest.Create("iaf_psc_exp", 4, params={"tau_syn_ex": 2.})
 
 nest.Connect(neuron[0], neuron[1], syn_spec=tsodyks_params)
 nest.Connect(neuron[0], neuron[2], syn_spec=tsodyks2_params)
-nest.Connect(neuron[0], neuron[3], syn_spec={'synapse_model': 'stp_synapse'})
+nest.Connect(neuron[0], neuron[3], syn_spec=tsodyks3_params)
+nest.Connect(neuron[0], neuron[4], syn_spec={'synapse_model': 'stp_synapse'})
 
 
 ###############################################################################
 # Now create the voltmeters to record the responses.
 
-voltmeter = nest.Create("voltmeter", 3, params={'interval': 0.1})
+voltmeter = nest.Create("voltmeter", 4, params={'interval': 0.1})
 
 ###############################################################################
 # Connect the voltmeters to the neurons.
@@ -101,6 +113,7 @@ voltmeter = nest.Create("voltmeter", 3, params={'interval': 0.1})
 nest.Connect(voltmeter[0], neuron[1])
 nest.Connect(voltmeter[1], neuron[2])
 nest.Connect(voltmeter[2], neuron[3])
+nest.Connect(voltmeter[3], neuron[4])
 
 ###############################################################################
 # Now simulate the standard STP protocol: a burst of spikes, followed by a
@@ -129,13 +142,15 @@ nest.Simulate(sim3)
 voltmeter1 = voltmeter[0].get('events')
 voltmeter2 = voltmeter[1].get('events')
 voltmeter3 = voltmeter[2].get('events')
+voltmeter4 = voltmeter[3].get('events')
 
 T = voltmeter1['times']
 V1 = voltmeter1['V_m']
 V2 = voltmeter2['V_m']
 V3 = voltmeter3['V_m']
+V4 = voltmeter4['V_m']
 
-data_v = [T, V1, V2, V3]
+data_v = [T, V1, V2, V3, V4]
 np.savetxt("voltage_data.dat", data_v)
 
 
@@ -143,6 +158,7 @@ plt.figure(1)
 nest.voltage_trace.from_device(voltmeter[0])
 nest.voltage_trace.from_device(voltmeter[1])
 nest.voltage_trace.from_device(voltmeter[2])
+nest.voltage_trace.from_device(voltmeter[3])
 plt.show()
 
 
